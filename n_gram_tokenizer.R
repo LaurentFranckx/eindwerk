@@ -5,7 +5,6 @@
 #' 
 #' 
 
-library(stringi)
 
 ngram_tokenizer <- function(n = 1L, skip_word_none = TRUE) {
   stopifnot(is.numeric(n), is.finite(n), n > 0)

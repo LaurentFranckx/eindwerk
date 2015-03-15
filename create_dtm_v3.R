@@ -1,4 +1,13 @@
 library(tm)
+library(domino)
+library(stringi)
+library(plyr)
+
+#domino.login("LaurentFranckx", "pruts_dom")
+
+source("n_gram_tokenizer.R")
+
+
 load(file = "cap_ston_corp_cl.RData")
 
 set.seed(123)
@@ -66,9 +75,11 @@ USBlogTokened <- strsplit_space_tokenizer(USBlogsPT[[1]])
 length(USBlogTokened)/1000
 USBlogTokenedUniq <- unique(USBlogTokened)
 length(USBlogTokenedUniq)/1000
+save(USBlogTokened, file = "USBlogTokened.RData")
 
 #this takes forever, use linux instead
 #dtm_blogsFreq <- termFreq(USBlogsPT, control = list(dictionary = FrqTermsUSBlgs))
+#load the table with all the unique words as identified by Linux
 USBlogFreq <- read.table("en_US_blogsunique.txt", stringsAsFactors = FALSE)
 names(USBlogFreq) <- c("freq", "word")
 USBlogFreq <- USBlogFreq[order(USBlogFreq$freq), ]
@@ -79,9 +90,6 @@ USBlofFeq100 <- USBlogFreq[USBlogFreq$freq > 99, ]
 USBlofFeq1000 <- USBlogFreq[USBlogFreq$freq > 999, ]
 USBlofFeq10000 <- USBlogFreq[USBlogFreq$freq > 9999, ]
 
-
-
-save(USBlogTokened, file = "USBlogTokened.RData")
 
 create_token2 <- FALSE
 
@@ -104,6 +112,124 @@ if(create_token3 == TRUE){
 # user  system elapsed 
 # 2661.19   31.88 4500.72
 
-save(USBlogTokened3Gr, file = "USBlogTokened3Gr.RData")
+#save(USBlogTokened3Gr, file = "USBlogTokened3Gr.RData")
+write.table(as.matrix(USBlogTokened3Gr), row.names = FALSE, col.names = FALSE, file = "USBlogTokened3Gr.txt", )
+#USBlogTokened3GrUn <- read.table("USBlogTokened3Gr_unique.txt", stringsAsFactors = FALSE, nrows = 37093446)
 
-load(file = "USBlogTokened3Gr.RData")
+
+#######################""
+# read the table with the 3Grams from US blogs and transform them in Markov matrcies
+############################""
+
+
+USBlogTokened3GrUn <- read.table("USBlogTokened3Gr_unique.txt", stringsAsFactors = FALSE)
+names(USBlogTokened3GrUn) <- c("freq", "3Gr")
+hist(USBlogTokened3GrUn$freq)
+summary(USBlogTokened3GrUn$freq)
+
+
+USBlogTokened3GrUn <- USBlogTokened3GrUn[order(USBlogTokened3GrUn$freq), ]
+#USBlogTokened3GrUn1 <- USBlogTokened3GrUn[USBlogTokened3GrUn$freq > 1, ]
+nrow(USBlogTokened3GrUn)/nrow(USBlogTokened3GrUn1)
+#USBlogTokened3GrUn2 <- USBlogTokened3GrUn[USBlogTokened3GrUn$freq > 2, ]
+rm(USBlogTokened3GrUn)
+gc()
+
+USBlogTokened3GrUn2 <- USBlogTokened3GrUn[USBlogTokened3GrUn$freq > 3, ]
+# USBlogTokened3GrUn4 <- USBlogTokened3GrUn[USBlogTokened3GrUn$freq > 4, ]
+# hist(USBlogTokened3GrUn4$freq)
+# summary(USBlogTokened3GrUn4$freq)
+
+
+# load(file = "USBlogTokened3Gr.RData")
+
+
+#only split the 3-grams that occur at least 5 times 
+# system.time(
+# #  USBlogTokened3Gr_split <- sapply(USBlogTokened3Gr[1:1000], stri_split_boundaries, type="word")
+# #  USBlogTokened3Gr_split <- stri_split_boundaries(USBlogTokened3Gr[1:100], type="word", simplify = TRUE)
+# #  USBlogTokened3GrUn4_split <- stri_split_boundaries(USBlogTokened3GrUn4[sample, "3Gr"], simplify = TRUE) 
+#   USBlogTokened3GrUn4_split <- stri_split_boundaries(USBlogTokened3GrUn4[, "3Gr"], simplify = TRUE)   
+#   )
+# 
+# # user  system elapsed 
+# # 0.81    0.03    0.84
+# 
+
+#only split the 3-grams that occur at least 3 times 
+system.time(
+  USBlogTokened3GrUn2_split <- stri_split_boundaries(USBlogTokened3GrUn2[, "3Gr"], simplify = TRUE)   
+)
+
+# user  system elapsed 
+# 2.00    0.05    2.09 
+
+
+#only split the 3-grams that occur at least 2 times 
+# system.time(
+#   USBlogTokened3GrUn1_split <- stri_split_boundaries(USBlogTokened3GrUn1[, "3Gr"], simplify = TRUE)   
+# )
+
+#due to anomaly that occured when splitting USBlogTokened3GrUn1_split
+# summary(USBlogTokened3GrUn1_split[,4])
+# any(USBlogTokened3GrUn1_split[,4] != "")
+# length(which(USBlogTokened3GrUn1_split[,4] != ""))
+# USBlogTokened3GrUn1_split[ USBlogTokened3GrUn1_split[,4] != "", ]
+# weird_split <- USBlogTokened3GrUn1_split[,4] != ""
+# USBlogTokened3GrUn1[weird_split, ]
+# USBlogTokened3GrUn1_split <- stri_split_boundaries(USBlogTokened3GrUn1[!(weird_split), "3Gr"], simplify = TRUE) 
+
+first_two <- paste(USBlogTokened3GrUn2_split[, 1], USBlogTokened3GrUn2_split[, 2], sep ="")
+USBlogTokened3GrUn2_merged <- cbind(first_two, USBlogTokened3GrUn2_split)
+USBlogTokened3GrUn2_merged <- cbind(USBlogTokened3GrUn2_merged, USBlogTokened3GrUn2 )
+USBlogTokened3GrUn2_merged <- USBlogTokened3GrUn2_merged[ , c("first_two", "V4", "3Gr" , "freq" )]
+names(USBlogTokened3GrUn2_merged) <- gsub("V4","third_trm",names(USBlogTokened3GrUn2_merged))
+
+# set.seed(123)
+# samp_size <- 500000
+# sample <- sample( nrow(USBlogTokened3GrUn2_merged), samp_size)
+# 
+USBlogTokened3GrUn2_merged_toAg <- USBlogTokened3GrUn2_merged[, ]
+df_to_aggr <- USBlogTokened3GrUn2_merged_toAg[  , c("freq")]
+
+rm(USBlogTokened3GrUn2_split)
+rm(USBlogTokened3GrUn2)
+gc()
+
+#takes more than two hours with the 3-grams that occur at least 2 times 
+# takes more than 1 hour as well with the 3-grams that occur at least three times
+# alot of operations take place in cached memory, moreover
+system.time(
+  USBlogTokened3GrUn2FrqFirst  <-  aggregate(df_to_aggr, by = list(USBlogTokened3GrUn2_merged_toAg$first_two),  FUN = sum )
+  
+)
+
+names(USBlogTokened3GrUn2FrqFirst) <- c("first_two", "freq_first_2")
+
+Markov_mat <- join(USBlogTokened3GrUn2_merged_toAg, USBlogTokened3GrUn2FrqFirst)
+Markov_mat$Bayes_prob <- with(Markov_mat, freq/freq_first_2)
+Markov_mat <- Markov_mat[order(Markov_mat$freq_first_2,Markov_mat$freq), ]
+head(Markov_mat)
+tail(Markov_mat)
+summary(Markov_mat)
+
+
+df_to_max <- Markov_mat[  , c("Bayes_prob")]
+df_max <- aggregate(df_to_max, by = list(Markov_mat$first_two,Markov_mat$third_trm) , FUN = max)
+names(df_max) <- c("first_two", "third_trm","Bayes_prob")
+df_max <- df_max[order(df_max$Bayes_prob), ]
+tail(df_max,50)
+
+
+
+
+# user  system elapsed 
+# 3.35    0.02    3.37 
+
+# try to split all 3-grams, including those that occur only once in the US blogs text
+#it is possible to perform this in about 2 minutes, but then it takes your whole memory
+# system.time(
+#   USBlogTokened3GrUn_split <- stri_split_boundaries(USBlogTokened3GrUn[, "3Gr"], simplify = TRUE)   
+# )
+
+
