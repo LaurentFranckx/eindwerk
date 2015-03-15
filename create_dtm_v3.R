@@ -213,15 +213,54 @@ head(Markov_mat)
 tail(Markov_mat)
 summary(Markov_mat)
 
-
+#find the maximal Bayesian prob for each first "two term"
 df_to_max <- Markov_mat[  , c("Bayes_prob")]
-df_max <- aggregate(df_to_max, by = list(Markov_mat$first_two,Markov_mat$third_trm) , FUN = max)
-names(df_max) <- c("first_two", "third_trm","Bayes_prob")
-df_max <- df_max[order(df_max$Bayes_prob), ]
-tail(df_max,50)
+df_max <- aggregate(df_to_max, by = list(Markov_mat$first_two) , FUN = max)
+names(df_max) <- c("first_two", "Bayes_prob_max")
+# df_max <- df_max[order(df_max$Bayes_prob_max), ]
+# tail(df_max,50)
+summary(df_max$Bayes_prob_max)
+
+#Markov_mat2 compares for each 3-gram the actual Bayesian prob with the max prob for the first 2-gram
+Markov_mat$first_two <- as.character(Markov_mat$first_two)
+df_max$first_two <- as.character(df_max$first_two)
+Markov_mat2 <- join(Markov_mat,df_max)
+# head(Markov_mat2)
+# tail(Markov_mat2)
+Markov_mat2_nomax <- Markov_mat2[Markov_mat2$Bayes_prob < Markov_mat2$Bayes_prob_max, ]
+Markov_mat_test <- Markov_mat2[Markov_mat2$Bayes_prob > Markov_mat2$Bayes_prob_max, ]
+
+#this gives, for each first 2-gram, the 3-gram with the highest likelihood
+Markov_ML <- Markov_mat2[Markov_mat2$Bayes_prob == Markov_mat2$Bayes_prob_max, ]
 
 
 
+#Markov_mat_test3 <- Markov_mat2[identical(Markov_mat2$Bayes_prob,Markov_mat2$Bayes_prob_max), ]
+
+nrow(Markov_mat) == nrow(df_max) + nrow(Markov_mat2_nomax)
+nrow(Markov_mat) == nrow(Markov_mat2_nomax) + nrow(Markov_mat_test) + nrow(Markov_mat_test2)
+nrow(Markov_mat_test2) - nrow(df_max)
+
+head(which(!(Markov_ML$first_two %in% df_max$first_two)))
+anyDuplicated(Markov_ML$first_two)
+Markov_ML <- Markov_ML[order(Markov_ML$first_two), ]
+Mardupl <- Markov_ML[duplicated(Markov_ML$first_two),]
+Mardupl[1,1]
+#duplication exist if there is a draw
+#to do: select only one as first choice
+Markov_ML[ Markov_ML$first_two == "a b " , ]
+Markov_ML[ Markov_ML$first_two == "a bakery " , ]
+
+
+head(which(!(Markov_ML$Bayes_prob_max %in% df_max$Bayes_prob_max)))
+
+dupl <- Markov_mat_test2[duplicated(Markov_mat_test2$first_two), ]
+Markov_mat_test2[Markov_mat_test2$first_two == "a bakery", ]
+
+
+dupl <- dupl[order(dupl$first_two), ]
+head(dupl)
+tail(dupl)
 
 # user  system elapsed 
 # 3.35    0.02    3.37 
