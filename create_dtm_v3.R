@@ -123,7 +123,7 @@ write.table(as.matrix(USBlogTokened3Gr), row.names = FALSE, col.names = FALSE, f
 
 
 USBlogTokened3GrUn <- read.table("USBlogTokened3Gr_unique.txt", stringsAsFactors = FALSE)
-names(USBlogTokened3GrUn) <- c("freq", "3Gr")
+names(USBlogTokened3GrUn) <- c("freq", "ThreeGr")
 hist(USBlogTokened3GrUn$freq)
 summary(USBlogTokened3GrUn$freq)
 
@@ -131,14 +131,14 @@ summary(USBlogTokened3GrUn$freq)
 USBlogTokened3GrUn <- USBlogTokened3GrUn[order(USBlogTokened3GrUn$freq), ]
 #USBlogTokened3GrUn1 <- USBlogTokened3GrUn[USBlogTokened3GrUn$freq > 1, ]
 nrow(USBlogTokened3GrUn)/nrow(USBlogTokened3GrUn1)
-#USBlogTokened3GrUn2 <- USBlogTokened3GrUn[USBlogTokened3GrUn$freq > 2, ]
-rm(USBlogTokened3GrUn)
-gc()
+USBlogTokened3GrUn2 <- USBlogTokened3GrUn[USBlogTokened3GrUn$freq > 2, ]
 
-USBlogTokened3GrUn2 <- USBlogTokened3GrUn[USBlogTokened3GrUn$freq > 3, ]
+#USBlogTokened3GrUn2 <- USBlogTokened3GrUn[USBlogTokened3GrUn$freq > 3, ]
 # USBlogTokened3GrUn4 <- USBlogTokened3GrUn[USBlogTokened3GrUn$freq > 4, ]
 # hist(USBlogTokened3GrUn4$freq)
 # summary(USBlogTokened3GrUn4$freq)
+rm(USBlogTokened3GrUn)
+gc()
 
 
 # load(file = "USBlogTokened3Gr.RData")
@@ -148,8 +148,8 @@ USBlogTokened3GrUn2 <- USBlogTokened3GrUn[USBlogTokened3GrUn$freq > 3, ]
 # system.time(
 # #  USBlogTokened3Gr_split <- sapply(USBlogTokened3Gr[1:1000], stri_split_boundaries, type="word")
 # #  USBlogTokened3Gr_split <- stri_split_boundaries(USBlogTokened3Gr[1:100], type="word", simplify = TRUE)
-# #  USBlogTokened3GrUn4_split <- stri_split_boundaries(USBlogTokened3GrUn4[sample, "3Gr"], simplify = TRUE) 
-#   USBlogTokened3GrUn4_split <- stri_split_boundaries(USBlogTokened3GrUn4[, "3Gr"], simplify = TRUE)   
+# #  USBlogTokened3GrUn4_split <- stri_split_boundaries(USBlogTokened3GrUn4[sample, "ThreeGr"], simplify = TRUE) 
+#   USBlogTokened3GrUn4_split <- stri_split_boundaries(USBlogTokened3GrUn4[, "ThreeGr"], simplify = TRUE)   
 #   )
 # 
 # # user  system elapsed 
@@ -158,7 +158,7 @@ USBlogTokened3GrUn2 <- USBlogTokened3GrUn[USBlogTokened3GrUn$freq > 3, ]
 
 #only split the 3-grams that occur at least 3 times 
 system.time(
-  USBlogTokened3GrUn2_split <- stri_split_boundaries(USBlogTokened3GrUn2[, "3Gr"], simplify = TRUE)   
+  USBlogTokened3GrUn2_split <- stri_split_boundaries(USBlogTokened3GrUn2[, "ThreeGr"], simplify = TRUE)   
 )
 
 # user  system elapsed 
@@ -167,7 +167,7 @@ system.time(
 
 #only split the 3-grams that occur at least 2 times 
 # system.time(
-#   USBlogTokened3GrUn1_split <- stri_split_boundaries(USBlogTokened3GrUn1[, "3Gr"], simplify = TRUE)   
+#   USBlogTokened3GrUn1_split <- stri_split_boundaries(USBlogTokened3GrUn1[, "ThreeGr"], simplify = TRUE)   
 # )
 
 #due to anomaly that occured when splitting USBlogTokened3GrUn1_split
@@ -177,12 +177,12 @@ system.time(
 # USBlogTokened3GrUn1_split[ USBlogTokened3GrUn1_split[,4] != "", ]
 # weird_split <- USBlogTokened3GrUn1_split[,4] != ""
 # USBlogTokened3GrUn1[weird_split, ]
-# USBlogTokened3GrUn1_split <- stri_split_boundaries(USBlogTokened3GrUn1[!(weird_split), "3Gr"], simplify = TRUE) 
+# USBlogTokened3GrUn1_split <- stri_split_boundaries(USBlogTokened3GrUn1[!(weird_split), "ThreeGr"], simplify = TRUE) 
 
 first_two <- paste(USBlogTokened3GrUn2_split[, 1], USBlogTokened3GrUn2_split[, 2], sep ="")
 USBlogTokened3GrUn2_merged <- cbind(first_two, USBlogTokened3GrUn2_split)
 USBlogTokened3GrUn2_merged <- cbind(USBlogTokened3GrUn2_merged, USBlogTokened3GrUn2 )
-USBlogTokened3GrUn2_merged <- USBlogTokened3GrUn2_merged[ , c("first_two", "V4", "3Gr" , "freq" )]
+USBlogTokened3GrUn2_merged <- USBlogTokened3GrUn2_merged[ , c("first_two", "V4", "ThreeGr" , "freq" )]
 names(USBlogTokened3GrUn2_merged) <- gsub("V4","third_trm",names(USBlogTokened3GrUn2_merged))
 
 # set.seed(123)
@@ -196,6 +196,8 @@ rm(USBlogTokened3GrUn2_split)
 rm(USBlogTokened3GrUn2)
 gc()
 
+
+#### sum the number of times the first two terms occur together
 #takes more than two hours with the 3-grams that occur at least 2 times 
 # takes more than 1 hour as well with the 3-grams that occur at least three times
 # alot of operations take place in cached memory, moreover
@@ -212,55 +214,47 @@ Markov_mat <- Markov_mat[order(Markov_mat$freq_first_2,Markov_mat$freq), ]
 head(Markov_mat)
 tail(Markov_mat)
 summary(Markov_mat)
+old_Markov_mat <- Markov_mat
 
-#find the maximal Bayesian prob for each first "two term"
-df_to_max <- Markov_mat[  , c("Bayes_prob")]
-df_max <- aggregate(df_to_max, by = list(Markov_mat$first_two) , FUN = max)
-names(df_max) <- c("first_two", "Bayes_prob_max")
-# df_max <- df_max[order(df_max$Bayes_prob_max), ]
-# tail(df_max,50)
-summary(df_max$Bayes_prob_max)
+Markov_ML <- list()
 
-#Markov_mat2 compares for each 3-gram the actual Bayesian prob with the max prob for the first 2-gram
-Markov_mat$first_two <- as.character(Markov_mat$first_two)
-df_max$first_two <- as.character(df_max$first_two)
-Markov_mat2 <- join(Markov_mat,df_max)
-# head(Markov_mat2)
-# tail(Markov_mat2)
-Markov_mat2_nomax <- Markov_mat2[Markov_mat2$Bayes_prob < Markov_mat2$Bayes_prob_max, ]
-Markov_mat_test <- Markov_mat2[Markov_mat2$Bayes_prob > Markov_mat2$Bayes_prob_max, ]
+for(i in 1:3){
+  #find the maximal Bayesian prob for each first "two term"
+  df_to_max <- old_Markov_mat[  , c("Bayes_prob")]
+  df_max <- aggregate(df_to_max, by = list(old_Markov_mat$first_two) , FUN = max)
+  names(df_max) <- c("first_two", "Bayes_prob_max")
+  
+  #Markov_mat2 compares for each 3-gram the actual Bayesian prob with the max prob for the first 2-gram
+#   old_Markov_mat$first_two <- as.character(old_Markov_mat$first_two)
+#   df_max$first_two <- as.character(df_max$first_two)
+  Markov_mat2 <- join(old_Markov_mat,df_max)
+  
+  #select all the rows with less than the max Bayes prob for second iteration
+  old_Markov_mat <- Markov_mat2[Markov_mat2$Bayes_prob < Markov_mat2$Bayes_prob_max, ]
+  
+  #this gives, for each first 2-gram, the 3-gram with the highest likelihood
+  #in the case of draws for the likelikhood, there will be duplications
+  Markov_help <- Markov_mat2[Markov_mat2$Bayes_prob == Markov_mat2$Bayes_prob_max, ]
+  Mardupl <- Markov_help[duplicated(Markov_help$first_two),]
+  Markov_help <- Markov_help[!(Markov_help$ThreeGr %in% Mardupl$ThreeGr),     ]
 
-#this gives, for each first 2-gram, the 3-gram with the highest likelihood
-Markov_ML <- Markov_mat2[Markov_mat2$Bayes_prob == Markov_mat2$Bayes_prob_max, ]
+  markov_name <- paste("ML",i,sep="")
+  Markov_ML[[markov_name]] <- Markov_help
+  
+  if(nrow(Markov_mat2) != nrow(Markov_help) + nrow(old_Markov_mat) + nrow(Mardupl)) stop("Problem in creation Markow table")
+  old_Markov_mat <- rbind(old_Markov_mat,Mardupl) 
+  old_Markov_mat  <- old_Markov_mat[  , setdiff(names(old_Markov_mat),"Bayes_prob_max" )]
+}
 
-
-
-#Markov_mat_test3 <- Markov_mat2[identical(Markov_mat2$Bayes_prob,Markov_mat2$Bayes_prob_max), ]
-
-nrow(Markov_mat) == nrow(df_max) + nrow(Markov_mat2_nomax)
-nrow(Markov_mat) == nrow(Markov_mat2_nomax) + nrow(Markov_mat_test) + nrow(Markov_mat_test2)
-nrow(Markov_mat_test2) - nrow(df_max)
-
-head(which(!(Markov_ML$first_two %in% df_max$first_two)))
-anyDuplicated(Markov_ML$first_two)
-Markov_ML <- Markov_ML[order(Markov_ML$first_two), ]
-Mardupl <- Markov_ML[duplicated(Markov_ML$first_two),]
-Mardupl[1,1]
-#duplication exist if there is a draw
-#to do: select only one as first choice
-Markov_ML[ Markov_ML$first_two == "a b " , ]
-Markov_ML[ Markov_ML$first_two == "a bakery " , ]
-
-
-head(which(!(Markov_ML$Bayes_prob_max %in% df_max$Bayes_prob_max)))
-
-dupl <- Markov_mat_test2[duplicated(Markov_mat_test2$first_two), ]
-Markov_mat_test2[Markov_mat_test2$first_two == "a bakery", ]
+summary(Markov_ML[[2]])
+tail(Markov_ML[[3]])
+nrow(Markov_ML[[1]])
+nrow(Markov_ML[[2]])
+nrow(Markov_ML[[3]])
 
 
-dupl <- dupl[order(dupl$first_two), ]
-head(dupl)
-tail(dupl)
+
+
 
 # user  system elapsed 
 # 3.35    0.02    3.37 
@@ -268,7 +262,7 @@ tail(dupl)
 # try to split all 3-grams, including those that occur only once in the US blogs text
 #it is possible to perform this in about 2 minutes, but then it takes your whole memory
 # system.time(
-#   USBlogTokened3GrUn_split <- stri_split_boundaries(USBlogTokened3GrUn[, "3Gr"], simplify = TRUE)   
+#   USBlogTokened3GrUn_split <- stri_split_boundaries(USBlogTokened3GrUn[, "ThreeGr"], simplify = TRUE)   
 # )
 
 
