@@ -1,15 +1,14 @@
 
 
-
 LoadNgram <- function(txttoanalyse, ngram, req_freq){
-  textname <- paste(txttoanalyse, "Tokened", ngram, "Uniq.txt", sep="")
+  textname <- paste(txttoanalyse, "Tokened", ngram, "_unique.txt", sep="")
   tokendngr <- read.table(textname, stringsAsFactors = FALSE)
   names(tokendngr) <- c("freq", ngram)
   tokendngr2 <- tokendngr[tokendngr$freq > req_freq, ]
   return(list("Original n-gram" = tokendngr, "n-gram to analyse" = tokendngr2))
 }
 
-MarkovChain <- function(tokendngr, ngram){
+SplitAndMargeNGr <- function(tokendngr, ngram){
   #only split the 3-grams that occur at least 3 times 
   system.time(
     tokendngr_split <- stri_split_boundaries(tokendngr[, ngram], simplify = TRUE)   
@@ -25,13 +24,12 @@ MarkovChain <- function(tokendngr, ngram){
   tokendngr_split_merged <- cbind(tokendngr_split_merged, tokendngr )
   tokendngr_split_merged <- tokendngr_split_merged[ , c("first", "V4", ngram , "freq" )]
   names(tokendngr_split_merged) <- gsub("V4","to_predict",names(tokendngr_split_merged))
+  return(tokendngr_split_merged)
+}
   
+MarkovChain <- function(tokendngr_split_merged, ngram){    
   df_to_aggr <- tokendngr_split_merged[  , c("freq")]
   
-  rm(tokendngr_split)
-  rm(tokendngr)
-  gc()
-   
   #### sum the number of times the first two terms occur together
   #takes more than two hours with the 3-grams that occur at least 2 times 
   # takes more than 1 hour as well with the 3-grams that occur at least three times
@@ -44,11 +42,12 @@ MarkovChain <- function(tokendngr, ngram){
   names(tokendngr_split_merged_sum) <- c("first", "freq_first")
   
   Markov_mat <- join(tokendngr_split_merged, tokendngr_split_merged_sum)
-  Markov_mat$Bayes_prob <- with(Markov_mat, freq/freq_first_2)
-  Markov_mat <- Markov_mat[order(Markov_mat$freq_first_2,Markov_mat$freq), ]
+  Markov_mat$Bayes_prob <- with(Markov_mat, freq/freq_first)
+  Markov_mat <- Markov_mat[order(Markov_mat$freq_first,Markov_mat$freq), ]
   old_Markov_mat <- Markov_mat
   
   Markov_ML <- list()
+  Markov_ML[["Markov_mat"]] <- Markov_mat
   
   for(i in 1:3){
     #find the maximal Bayesian prob for each first "two term"
