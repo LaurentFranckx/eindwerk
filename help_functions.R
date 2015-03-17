@@ -9,14 +9,13 @@ LoadNgram <- function(txttoanalyse, ngram, req_freq){
 }
 
 SplitAndMargeNGr <- function(tokendngr, ngram){
-  #only split the 3-grams that occur at least 3 times 
-  system.time(
-    tokendngr_split <- stri_split_boundaries(tokendngr[, ngram], simplify = TRUE)   
-  )
+  tokendngr_split <- stri_split_boundaries(tokendngr[, ngram], simplify = TRUE)   
   
-  if(ngram == "ThreeGr"){
+  if(ngram == "FourGr"){
+    first <- paste(tokendngr_split[, 1], tokendngr_split[, 2], tokendngr_split[, 3], sep ="")  
+  } else if(ngram == "ThreeGr")  {
     first <- paste(tokendngr_split[, 1], tokendngr_split[, 2], sep ="")  
-  } else if(ngram == "TwoGr")  {
+  }  else (ngram == "TwoGr")  {
     first <- paste(tokendngr_split[, 1])  
   }
   
@@ -31,13 +30,7 @@ MarkovChain <- function(tokendngr_split_merged, ngram){
   df_to_aggr <- tokendngr_split_merged[  , c("freq")]
   
   #### sum the number of times the first two terms occur together
-  #takes more than two hours with the 3-grams that occur at least 2 times 
-  # takes more than 1 hour as well with the 3-grams that occur at least three times
-  # alot of operations take place in cached memory, moreover
-  system.time(
-    tokendngr_split_merged_sum  <-  aggregate(df_to_aggr, by = list(tokendngr_split_merged$first),  FUN = sum )
-    
-  )
+  tokendngr_split_merged_sum  <-  aggregate(df_to_aggr, by = list(tokendngr_split_merged$first),  FUN = sum )
   
   names(tokendngr_split_merged_sum) <- c("first", "freq_first")
   

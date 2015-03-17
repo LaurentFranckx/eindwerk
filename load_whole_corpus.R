@@ -1,6 +1,20 @@
 library(tm)
 library(stringr)
-folder_txt <- "D:/coursera/dsc_capstone/Coursera-SwiftKey/final/en_US/"
+#library(domino)
+install.packages("domino", dependencies=TRUE, repos='http://cran.us.r-project.org')
+install.packages("stringi", dependencies=TRUE, repos='http://cran.us.r-project.org')
+
+library(stringi)
+library(plyr)
+
+#domino.login("LaurentFranckx", "pruts_dom")
+source("n_gram_tokenizer.R")
+source("help_functions.R")
+
+
+
+
+folder_txt <- file.path("Coursera-SwiftKey","final","en_US")
 txts <- list.files(folder_txt, "txt")
 #loading in binary format is too slow
 #cap_ston_corp <- Corpus(DirSource(folder_txt, encoding = "UTF-8", mode = "binary"))
@@ -8,7 +22,7 @@ txts <- list.files(folder_txt, "txt")
 cap_ston_corp <- Corpus(DirSource(folder_txt, encoding = "UTF-8"))
 
 
-banned_words <- readLines("D:/coursera/dsc_capstone/full-list-of-bad-words-banned-by-google-txt-file/banned.txt")
+banned_words <- readLines(file.path("full-list-of-bad-words-banned-by-google-txt-file","banned.txt"))
 
 replace_utf_by_latin <- content_transformer(function(x) iconv(x, from="UTF-8", to="latin1", sub=" "))
 replace_by_empty <- content_transformer(function(x, pattern) gsub(pattern," ",x))
@@ -25,6 +39,6 @@ cap_ston_corp_cl <- tm_map(cap_ston_corp_cl, replace_utf_by_latin)
 cap_ston_corp_cl <- tm_map(cap_ston_corp_cl, removeWords, banned_words)
 cap_ston_corp_cl <- tm_map(cap_ston_corp_cl, stripWhitespace)
 
-save(cap_ston_corp_cl, file = "cap_ston_corp_cl.RData")
-
+#save(cap_ston_corp_cl, file = "cap_ston_corp_cl.RData")
+source("US_blogs.R")
 
