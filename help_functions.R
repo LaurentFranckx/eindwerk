@@ -44,6 +44,7 @@ SplitAndMargeNGr <- function(tokendngr, ngram){
 }
   
 MarkovChain <- function(tokendngr_split_merged, ngram){    
+ 
   df_to_aggr <- tokendngr_split_merged[  , c("freq")]
   
   #### sum the number of times the first two terms occur together
@@ -62,7 +63,12 @@ MarkovChain <- function(tokendngr_split_merged, ngram){
   for(i in 1:3){
     #find the maximal Bayesian prob for each first "two term"
     df_to_max <- old_Markov_mat[  , c("Bayes_prob")]
-    df_max <- aggregate(df_to_max, by = list(old_Markov_mat$first) , FUN = max)
+    if (length(df_to_max) == 0){
+       warning("In iteration " , i , " of the construction of the Markow matrix, there are no more
+                             rows left to aggregate. \n Returning incomplete Markow matrix.")
+       return(Markov_ML)
+     }
+     df_max <- aggregate(df_to_max, by = list(old_Markov_mat$first) , FUN = max)
     names(df_max) <- c("first", "Bayes_prob_max")
     
     #Markov_mat2 compares for each 3-gram the actual Bayesian prob with the max prob for the first 2-gram

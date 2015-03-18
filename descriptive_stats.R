@@ -1,6 +1,6 @@
 
 load(file = "cap_ston_corp_cl.RData")
-
+library("poweRlaw")
 
 ##################################""
 #### WORKING WITH THE US BLOGS DOCUMENT
@@ -25,36 +25,64 @@ USBlogsPT <- PlainTextDocument(cap_ston_corp_cl[["en_US.blogs.txt"]]$content)
 #this takes forever, use linux instead
 #dtm_blogsFreq <- termFreq(USBlogsPT, control = list(dictionary = FrqTermsUSBlgs))
 #load the table with all the unique words as identified by Linux
-# USBlogFreq <- read.table("en_US_blogsunique.txt", stringsAsFactors = FALSE)
-# names(USBlogFreq) <- c("freq", "word")
-# USBlogFreq <- USBlogFreq[order(USBlogFreq$freq), ]
+
+TestFreqTable <- read.table("US.twitterunique.txt", stringsAsFactors = FALSE)
+names(TestFreqTable) <- c("freq", "word")
+TestFreqTable <- TestFreqTable[order(TestFreqTable$freq, decreasing = TRUE), ]
+summary(TestFreqTable$freq)
 # USBlofFeq2 <- USBlogFreq[USBlogFreq$freq > 1, ]
 # USBlofFeq3 <- USBlogFreq[USBlogFreq$freq > 2, ]
 # USBlofFeq10 <- USBlogFreq[USBlogFreq$freq > 9, ]
 # USBlofFeq100 <- USBlogFreq[USBlogFreq$freq > 99, ]
 # USBlofFeq1000 <- USBlogFreq[USBlogFreq$freq > 999, ]
 # USBlofFeq10000 <- USBlogFreq[USBlogFreq$freq > 9999, ]
-# 
-# 
-# create_token2 <- TRUE
-# if(create_token2 == TRUE){
-#   USBlogTokened2Gr <- two_gram_tokenizer(USBlogsPT[[1]])  
-# }
-# # user  system elapsed 
-# # 2998.37   11.08 3267.37 
-# save(USBlogTokened2Gr, file = "USBlogTokened2Gr.RData")
 
-TokenizeMarkov("US.blogs", ngram= 2, req_freq = 3, samplesize = 10^4, create_token = TRUE)
-TokenizeMarkov("US.blogs", ngram= 3, req_freq = 3, samplesize = 10^4, create_token = TRUE)
-TokenizeMarkov("US.blogs", ngram= 4, req_freq = 3, samplesize = 10^4, create_token = TRUE)
+freq_count <- TestFreqTable$freq
+FreqPow <- displ$new(freq_count)
+FreqPow$getXmin()
+#USBlogFreqPowPars <- estimate_pars(USBlogFreqPow, pars = NULL)
+FreqPowMin <- estimate_xmin(FreqPow, pars = NULL)
+FreqPow$setXmin(FreqPowMin)
 
-TokenizeMarkov("US.news", ngram= 2, req_freq = 3, samplesize = 10^4, create_token = TRUE)
-TokenizeMarkov("US.news", ngram= 3, req_freq = 3, samplesize = 10^4, create_token = TRUE)
-TokenizeMarkov("US.news", ngram= 4, req_freq = 3, samplesize = 10^4, create_token = TRUE)
 
-TokenizeMarkov("US.twitter", ngram= 2, req_freq = 3, samplesize = 10^4, create_token = TRUE)
-TokenizeMarkov("US.twitter", ngram= 3, req_freq = 3, samplesize = 10^4, create_token = TRUE)
-TokenizeMarkov("US.twitter", ngram= 4, req_freq = 3, samplesize = 10^4, create_token = TRUE)
+# USBlogFreqPowEst <- USBlogFreqPow$setPars(USBlogFreqPowPars$pars)
+# USBlogFreqPow$getPars()
+# USBlogFreqPow$setPars(2)
+
+bootstrap_p(FreqPow)
+
+#plot(FreqPow)
+summary(FreqPow$internal$freq)
+summary(FreqPow$internal$values)
+summary(freq_count)
+y <- FreqPow$internal$freq
+x <- FreqPow$internal$values
+df <- cbind(x,y)
+head(df)
+tail(df)
+plot(log(x),log(y))
+
+TestFreqTable[ TestFreqTable$freq == max(TestFreqTable$freq) , ]
+
+test <- dist_cdf(FreqPow)
+
+system.time(
+  TestFreqTable$sum_of_freq <- cumsum(freq_count) 
+  )
+
+
+total_count <- sum(freq_count)
+
+
+system.time(
+  TestFreqTable$sum_of_shares <- TestFreqTable$sum_of_freq/total_count
+)
+
+
+TestFreqTable[TestFreqTable$sum_of_shares > 0.5, ][1, ]
+
+
+
 
 
 
