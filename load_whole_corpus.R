@@ -1,13 +1,12 @@
 library(tm)
 library(stringr)
 #library(domino)
-# install.packages("domino", dependencies=TRUE, repos='http://cran.us.r-project.org')
-# install.packages("stringi", dependencies=TRUE, repos='http://cran.us.r-project.org')
+install.packages("domino", dependencies=TRUE, repos='http://cran.us.r-project.org')
+install.packages("stringi", dependencies=TRUE, repos='http://cran.us.r-project.org')
 
 library(stringi)
 library(plyr)
 
-#domino.login("LaurentFranckx", "pruts_dom")
 source("n_gram_tokenizer.R")
 source("help_functions.R")
 
@@ -40,5 +39,8 @@ cap_ston_corp_cl <- tm_map(cap_ston_corp_cl, removeWords, banned_words)
 cap_ston_corp_cl <- tm_map(cap_ston_corp_cl, stripWhitespace)
 
 save(cap_ston_corp_cl, file = "cap_ston_corp_cl.RData")
-source("US_blogs.R")
+#load(file = "cap_ston_corp_cl.RData")
+
+
+
 

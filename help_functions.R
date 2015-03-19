@@ -64,7 +64,7 @@ MarkovChain <- function(tokendngr_split_merged, ngram){
     #find the maximal Bayesian prob for each first "two term"
     df_to_max <- old_Markov_mat[  , c("Bayes_prob")]
     if (length(df_to_max) == 0){
-       warning("In iteration " , i , " of the construction of the Markow matrix, there are no more
+       warning("In iteration " , i , " of the construction of the Markow matrix there are no more
                              rows left to aggregate. \n Returning incomplete Markow matrix.")
        return(Markov_ML)
      }
@@ -98,7 +98,8 @@ MarkovChain <- function(tokendngr_split_merged, ngram){
 
 
 
-TokenizeMarkov <- function(text, ngram, req_freq, samplesize = 0, create_token = FALSE) {
+TokenizeMarkov <- function(input_txt, ngram, req_freq, samplesize = length(texttotoken), create_token = FALSE) {
+  cat("Markov matrix started for ", ngram, "n-gram and ", input_txt, ". \n")  
   if(ngram == 4){
     ngram_sym <-"FourGr"   
   } else if(ngram == 3)  {
@@ -109,7 +110,7 @@ TokenizeMarkov <- function(text, ngram, req_freq, samplesize = 0, create_token =
     stop("Unkown n-gram",  ngram, ".\n")    
   }
   
-  or_txt <- paste("en_", text, ".txt", sep="")
+  or_txt <- paste("en_", input_txt, ".txt", sep="")
   texttotoken <- PlainTextDocument(cap_ston_corp_cl[[or_txt]]$content)[[1]]
 
   set.seed(123) 
@@ -121,25 +122,25 @@ TokenizeMarkov <- function(text, ngram, req_freq, samplesize = 0, create_token =
     tokenized <- tokenizer(texttotoken_sample)
   }
   cat("Tokenization finalised for ", ngram, "n-gram. \n")
-  matrixname <- paste(text,"Tokened", ngram, "Gr.txt", sep = "")
+  matrixname <- paste(input_txt,"Tokened", ngram, "Gr.txt", sep = "")
   write.table(as.matrix(tokenized), row.names = FALSE, col.names = FALSE, file = matrixname)
   rm(texttotoken)
   rm(texttotoken_sample)
   rm(tokenized)
   gc()
   
-  freqmat <- paste(text,"Tokened", ngram, "Gr_uniq.txt",sep= "")  
+  freqmat <- paste(input_txt,"Tokened", ngram, "Gr_uniq.txt",sep= "")  
   system(paste("sort < ", matrixname,  " | uniq -c > ", freqmat,  sep = " "))
   
   
-  TokenedGrUn <- LoadNgram(text,ngram_sym, req_freq)
+  TokenedGrUn <- LoadNgram(input_txt,ngram_sym, req_freq)
   GrSplitMg <- SplitAndMargeNGr(TokenedGrUn[[2]],ngram_sym)
   rm(TokenedGrUn)
   gc()
   
-  name_markov <- paste(text,ngram, "Markov", sep="")
+  name_markov <- paste(input_txt,ngram, "Markov", sep="")
   assign(name_markov, MarkovChain(GrSplitMg,ngram_sym))
   filename <- paste(name_markov,"RData", sep= ".")
   save(list = name_markov, file = filename)
-  cat("Markov matrix finalised for ", ngram, "n-gram. \n")  
+  cat("Markov matrix finalised for ", ngram, "n-gram and ", input_txt, ". \n")  
 }

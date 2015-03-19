@@ -43,44 +43,22 @@ FreqPow$getXmin()
 #USBlogFreqPowPars <- estimate_pars(USBlogFreqPow, pars = NULL)
 FreqPowMin <- estimate_xmin(FreqPow, pars = NULL)
 FreqPow$setXmin(FreqPowMin)
+plot(FreqPow)
+lines(FreqPow)
 
 
-# USBlogFreqPowEst <- USBlogFreqPow$setPars(USBlogFreqPowPars$pars)
-# USBlogFreqPow$getPars()
-# USBlogFreqPow$setPars(2)
-
-bootstrap_p(FreqPow)
-
-#plot(FreqPow)
-summary(FreqPow$internal$freq)
-summary(FreqPow$internal$values)
-summary(freq_count)
-y <- FreqPow$internal$freq
-x <- FreqPow$internal$values
-df <- cbind(x,y)
-head(df)
-tail(df)
-plot(log(x),log(y))
+bootstrap_p(FreqPow, xmins = FreqPow$getXmin())
 
 TestFreqTable[ TestFreqTable$freq == max(TestFreqTable$freq) , ]
 
-test <- dist_cdf(FreqPow)
 
-system.time(
-  TestFreqTable$sum_of_freq <- cumsum(freq_count) 
-  )
-
-
-total_count <- sum(freq_count)
-
-
-system.time(
-  TestFreqTable$sum_of_shares <- TestFreqTable$sum_of_freq/total_count
-)
-
-
-TestFreqTable[TestFreqTable$sum_of_shares > 0.5, ][1, ]
-
+CutoffTable <- function(df, freq_val, value){
+  df$sum_of_freq <- cumsum(df$freq_val)
+  total_count <- sum(df$freq_val)
+  df$sum_of_shares <- df$sum_of_freq/total_count
+  df_low <- df[df$sum_of_shares < value,   ]
+  return(df_low)
+}
 
 
 

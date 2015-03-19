@@ -1,0 +1,76 @@
+---
+title: "Milestone report"
+author: "Me"
+date: "Thursday, March 19, 2015"
+output: pdf_document
+---
+
+#Introduction
+
+This paper presents intermediate results in the construction of a predictive text model. The final objective
+of this model is to provide users for suggestions for autocompleting a sentence they have started. 
+
+The training data set has been obtained from the Coursera website, but are originally  from a corpus called HC Corpora (www.corpora.heliohost.org). The complete set consists of databases in English, German, Russian and Finnish. In this project we will limit ourselves to the English database. 
+
+The English database itself is composed of three files, each composed of several hundreds of thousands of text lines from blogs, news cites and Twitter. 
+
+As a first step in the paper, we will  explain the approach used to the cleaning of the data. Next, we will summarize the main descriptive statistics for each dataset, and explore how these compare to each other. Finally, we will describe the next steps we intend to undertake in order to construct our model. 
+
+
+#Data cleaning
+
+As a first step in our project, we have cleaned the original data. 
+
+- First, we have modified the encoding from "UTF-8" to "latin1" - not doing so would lead to the creation of unreadable characters.
+- Second, we have removed any numbers present.
+- Third we have removed all the words that are banned by Google for their profane or offensive character.
+- Fourth, we have removed all white spaces that have resulted frm the previous steps. 
+
+Howevern, punctuation and other non-alphanumeric characters are an integral part of the sentence (especially in the case of Twitter), as have therefore been kept as they were.  
+
+Although foreign words have crept inside the database, we have left them as they were. Indeed, some foreign words are deliberately used in English to convey a specific message. If foreign sentences have been included inadvertently in the database, they are likely to be eliminated in the next step of the analysis, where we have eliminated all words that did not occur a minimum number of times. 
+
+
+
+#Descriptive statistics of the twitter file
+
+
+```{r, echo=FALSE, cache=TRUE}
+setwd("D:/coursera/dsc_capstone")
+library("poweRlaw")
+TestFreqTable <- read.table("US.twitterunique.txt", stringsAsFactors = FALSE)
+names(TestFreqTable) <- c("freq", "word")
+TestFreqTable <- TestFreqTable[order(TestFreqTable$freq, decreasing = TRUE), ]
+
+
+```
+
+Using the "cleaned" version of the Twitter file, we have counted the number of occurences of each word in the file.
+
+```{r}
+summary(TestFreqTable$freq)
+
+```
+
+This clearly suggests a very skewed distribution. 
+
+
+```{r, echo=FALSE, cache=TRUE}
+freq_count <- TestFreqTable$freq
+FreqPow <- displ$new(freq_count)
+FreqPow$getXmin()
+#USBlogFreqPowPars <- estimate_pars(USBlogFreqPow, pars = NULL)
+FreqPowMin <- estimate_xmin(FreqPow, pars = NULL)
+FreqPow$setXmin(FreqPowMin)
+FreqPowBoot <- bootstrap_p(FreqPow, xmins = FreqPow$getXmin())
+```
+
+```{r, echo=FALSE, cache=TRUE}
+plot(FreqPow)
+lines(FreqPow)
+```
+
+
+We have tested whether the distribution of the frequency of the unique word counts follows a power distribution.
+With a p-value of `r sprintf("%.2f",FreqPowBoot$p)`, we see that the null
+
