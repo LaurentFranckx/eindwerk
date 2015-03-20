@@ -105,6 +105,7 @@ FreqPow <- displ$new(freq_count)
 FreqPowMin <- estimate_xmin(FreqPow, pars = NULL)
 FreqPow$setXmin(FreqPowMin)
 FrqvsVal <- cbind(FreqPow$internal$freq,FreqPow$internal$values)
+FrqvsVal <- as.data.frame(FrqvsVal)
 names(FrqvsVal ) <- c("Number of individuals words", "Number of counts in the whole database")
 ```
 
@@ -115,7 +116,7 @@ most_freq_word <- TestFreqTable[ TestFreqTable$freq == max(TestFreqTable$freq) ,
 most_freq_word 
 ```
 
-Thus `r sprintf("%1.0f",FrqvsVal [1, 1]/1000)` thousand individual words appear exactly `r FrqvsVal [1, 2]` time in the database, while `r FrqvsVal [nrow(FrqvsVal), 1]` word (not surprisingly, this is " `r most_freq_word` ""), appears exactly `r FrqvsVal [nrow(FrqvsVal), 2]` times in the database.
+Thus `r sprintf("%1.0f",FrqvsVal[1, 1]/1000)` thousand individual words appear exactly `r FrqvsVal[1, 2]` time in the database, while `r FrqvsVal[nrow(FrqvsVal), 1]` word (not surprisingly, this is " `r most_freq_word` ""), appears exactly `r FrqvsVal[nrow(FrqvsVal), 2]` times in the database.
 
 Finally, we can have a look at a sample of words that appear very infrequently in the database: 
 
@@ -184,6 +185,68 @@ The  Twitter table contains  a total of
 
 Out of these unique 2-grams, `r sprintf("%0d", nrow(ngramuniqueFreq[[3]])) ` 2-grams (this is thus `r sprintf("%1.2f", nrow(ngramuniqueFreq[[3]])/nrow(ngramunique) * 100) ` %) correspond to 90% of all 2-gram occurences.
 
+Another indication of the relative frequency with which 2-grams occur is to compare how many 2-grams 
+appear a minimum number of times in the whole database: 
 
+```{r, echo=FALSE}
+#summary(TestFreqTable$freq)
+min_fretable_ngr
+
+```
+
+Thus, `r nrow(ngramunique[ngramunique$freq > 1, ])` individual 2-grams appear more than once in the database,
+`r nrow(ngramunique[ngramunique$freq > 2, ])` individual 2-grams appear more than twice in the database, etc.
+
+Another indication of the  skewness of the frequency of 2-grams is obtained when we look at the summary statistics of the number of counts: 
+
+```{r, echo=FALSE}
+summary(ngramunique$freq)
+```
+
+
+Still another way to look at the data is to calculate how many individual 2-grams with a given count appear in the database. We represent here the first five and the last five lines of the table containing this information (henceforth the "frequency count table"). 
+
+```{r, echo=FALSE, cache=TRUE}
+freq_count_ngr  <- ngramunique$freq
+FreqPow2Gr <- displ$new(freq_count_ngr)
+#FreqPow2Gr$getXmin()
+#USBlogFreqPow2GrPars <- estimate_pars(USBlogFreqPow2Gr, pars = NULL)
+FreqPow2GrMin <- estimate_xmin(FreqPow2Gr, pars = NULL)
+FreqPow2Gr$setXmin(FreqPow2GrMin)
+FrqvsVal2Gr <- cbind(FreqPow2Gr$internal$freq,FreqPow2Gr$internal$values)
+FrqvsVal2Gr <- data.frame(FrqvsVal2Gr)
+names(FrqvsVal2Gr ) <- c("Number of individuals 2-grams", "Number of counts in the whole database")
+```
+
+```{r, echo=FALSE, cache=TRUE}
+head(FrqvsVal2Gr )
+tail(FrqvsVal2Gr )
+most_freq_2gr <- ngramunique[ ngramunique$freq == max(ngramunique$freq) , "n-gram" ]
+most_freq_2gr 
+```
+
+Thus `r sprintf("%1.0f", FrqvsVal2Gr[1, 1]/1000)` thousand individual 2-grams appear exactly `r FrqvsVal2Gr[1, 2]` time in the database, while `r FrqvsVal2Gr[nrow(FrqvsVal2Gr), 1]` 2-gram (this is " `r most_freq_2gr` ""), appears exactly `r FrqvsVal2Gr[nrow(FrqvsVal2Gr), 2]` times in the database.
+
+
+Finally, we can have a look at a sample of 2-grams that appear very infrequently in the database: 
+
+```{r, echo=FALSE, cache=TRUE}
+set.seed(123)
+low_frq <- ngramunique[ ngramunique$freq < 7 , ]
+low_frq[sample(1:nrow(low_frq), 10)  , ]
+```
+
+We see that there are still a lot of these 2-grams that make little sense in English, but compared to individual words, there are also some "low frequency" 2-grams that do make sense.
+
+
+Finally, we consider the possibility that the 2-grams may follow a power law. 
+
+
+```{r, echo=FALSE, cache=TRUE}
+plot(FreqPow2Gr)
+lines(FreqPow2Gr)
+boot_res <- bootstrap_p(FreqPow2Gr, xmins = FreqPow2Gr$getXmin())
+rm()
+```
 
 
