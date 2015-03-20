@@ -2,7 +2,7 @@
 title: "Milestone report"
 author: "Me"
 date: "Thursday, March 19, 2015"
-output: pdf_document
+output: html_document
 ---
 
 #Introduction
@@ -53,13 +53,14 @@ names(TestFreqTable) <- c("freq", "word")
 TestFreqTable <- TestFreqTable[order(TestFreqTable$freq, decreasing = TRUE), ]
 TestFreqList <- CutoffTable(TestFreqTable, "freq", 0.9)
 
-min_fretable <- rbind(c(1, nrow(TestFreqTable[TestFreqTable$freq > 1, ])), c(2,nrow( TestFreqTable[TestFreqTable$freq > 2, ])))
-min_fretable <- rbind(min_fretable, c(9, nrow(TestFreqTable[TestFreqTable$freq > 9, ])))
-min_fretable <- rbind(min_fretable, c(99, nrow(TestFreqTable[TestFreqTable$freq > 99, ])))
-min_fretable <- rbind(min_fretable, c(999, nrow(TestFreqTable[TestFreqTable$freq > 999,])))
-min_fretable <- rbind(min_fretable, c(9999, nrow(TestFreqTable[TestFreqTable$freq > 9999, ])))
+min_fretable <- rbind(c(2, nrow(TestFreqTable[TestFreqTable$freq > 1, ])), c(3,nrow( TestFreqTable[TestFreqTable$freq > 2, ])))
+min_fretable <- rbind(min_fretable, c(10, nrow(TestFreqTable[TestFreqTable$freq > 9, ])))
+min_fretable <- rbind(min_fretable, c(100, nrow(TestFreqTable[TestFreqTable$freq > 99, ])))
+min_fretable <- rbind(min_fretable, c(1000, nrow(TestFreqTable[TestFreqTable$freq > 999,])))
+min_fretable <- rbind(min_fretable, c(10000, nrow(TestFreqTable[TestFreqTable$freq > 9999, ])))
 min_fretable <- as.data.frame(min_fretable)
-names(min_fretable) <- c("Minimum number of occurences", "Number of unique words")
+min_fretable$share <- min_fretable[, 2]/nrow(TestFreqTable) * 100
+names(min_fretable) <- c("Minimum # of occurences", "# of unique words", "Share in total # of unique words")
 
 
 ```
@@ -74,9 +75,10 @@ Out of these unique words, `r sprintf("%0d", nrow(TestFreqList[[3]])) ` words (t
 Another indication of the relative frequency with which words occur is to compare how many words 
 appear a minimum number of times in the whole database: 
 
-```{r}
+```{r, echo=FALSE}
 #summary(TestFreqTable$freq)
-
+rm(or_table)
+gc()
 min_fretable
 
 ```
@@ -86,11 +88,13 @@ Thus, `r nrow(TestFreqTable[TestFreqTable$freq > 1, ])` individual words appear 
 
 The general skewness of the frequency of words is confirmed when we look at the summary statistics of the number of counts: 
 
-```{r}
+```{r, echo=FALSE}
 summary(TestFreqTable$freq)
 ```
 
-It has been suggested that the counts of individuals words in a corpus generally follows a power law.
+
+Still another way to look at the data is to calculate how many individual words appear in the database with a given count. We represent here the first five and the last five lines of the table containing this information (henceforth the "frequency count table"). 
+
 
 
 ```{r, echo=FALSE, cache=TRUE}
@@ -100,17 +104,86 @@ FreqPow <- displ$new(freq_count)
 #USBlogFreqPowPars <- estimate_pars(USBlogFreqPow, pars = NULL)
 FreqPowMin <- estimate_xmin(FreqPow, pars = NULL)
 FreqPow$setXmin(FreqPowMin)
-df <- cbind(FreqPow$internal$freq,FreqPow$internal$values)
-head(df)
-tail(df)
+FrqvsVal <- cbind(FreqPow$internal$freq,FreqPow$internal$values)
+names(FrqvsVal ) <- c("Number of individuals words", "Number of counts in the whole database")
 ```
 
-Therefore, we calculate 
+```{r, echo=FALSE, cache=TRUE}
+head(FrqvsVal )
+tail(FrqvsVal )
+most_freq_word <- TestFreqTable[ TestFreqTable$freq == max(TestFreqTable$freq) , "word" ]
+most_freq_word 
+```
+
+Thus `r sprintf("%1.0f",FrqvsVal [1, 1]/1000)` thousand individual words appear exactly `r FrqvsVal [1, 2]` time in the database, while `r FrqvsVal [nrow(FrqvsVal), 1]` word (not surprisingly, this is " `r most_freq_word` ""), appears exactly `r FrqvsVal [nrow(FrqvsVal), 2]` times in the database.
+
+Finally, we can have a look at a sample of words that appear very infrequently in the database: 
+
+```{r, echo=FALSE, cache=TRUE}
+set.seed(123)
+low_frq <- TestFreqTable[ TestFreqTable$freq < 7 , ]
+low_frq[sample(1:nrow(low_frq), 10)  , ]
+# head(TestFreqTable[ TestFreqTable$freq == min(TestFreqTable$freq) , ], 3)
+# 
+# head(TestFreqTable[ TestFreqTable$freq == 2 , ], 3)
+# 
+# head(TestFreqTable[ TestFreqTable$freq == 3 , ], 3)
+# 
+# head(TestFreqTable[ TestFreqTable$freq == 4 , ], 3)
+```
+
+These words are generally meaningless in English. 
+
+It has been suggested in the literature that the counts of individuals words in a corpus generally follows a power law, i.e. that the frequency of a word is inversely proportional to its frequency rank. Thus, the second most frequent word occurs half as often the most frequent word, the third most frequent word occurs one third as often as the most frequent word, etc - see http://en.wikipedia.org/wiki/Power_law. 
+
+
+However, a formal hypothesis has rejected this possibility (details are available on request). 
+In the plot below, we have set out the logs of the variables in the "frequency count table". The straight line correspond to the best possible fit of a power law. This confirms that, for words that appear very frequently, the observations deviate substantially from the predictions of a power law. 
+
+
 
 ```{r, echo=FALSE, cache=TRUE}
 # plot(FreqPow)
 # lines(FreqPow)
 # boot_res <- bootstrap_p(FreqPow, xmins = FreqPow$getXmin())
+
+rm()
 ```
+
+
+The next question we need to consider is the distribution of n-grams, i.e.  contiguous sequences of n items in the database. For the purposes of this project, we have constructed 2-grams, 3-grams and 4-grams. 
+
+As a full discussion of the properties of all n-grams would take us too far, we focus here on the analysis of 2-grams.
+
+
+
+```{r, echo=FALSE, cache=TRUE}
+ngramunique <- read.table("US.twitterTokened2Gr_uniq.txt", stringsAsFactors = FALSE)
+#ngramunique <- readLines("US.twitterTokened4Gr_uniq.txt")
+names(ngramunique) <- c("freq", "n-gram")
+nrow(ngramunique)
+ngramunique <- ngramunique[complete.cases(ngramunique),]
+nrow(ngramunique)
+
+ngramunique <- ngramunique[order(ngramunique$freq, decreasing = TRUE), ]
+ngramuniqueFreq <-  CutoffTable(ngramunique, "freq", 0.9)
+
+min_fretable_ngr <- rbind(c(2, nrow(ngramunique[ngramunique$freq > 1, ])), c(3,nrow(ngramunique[ngramunique$freq > 2, ])))
+min_fretable_ngr <- rbind(min_fretable_ngr, c(10, nrow(ngramunique[ngramunique$freq > 9, ])))
+min_fretable_ngr <- rbind(min_fretable_ngr, c(100, nrow(ngramunique[ngramunique$freq > 99, ])))
+min_fretable_ngr <- rbind(min_fretable_ngr, c(1000, nrow(ngramunique[ngramunique$freq > 999,])))
+min_fretable_ngr <- rbind(min_fretable_ngr, c(10000, nrow(ngramunique[ngramunique$freq > 9999, ])))
+min_fretable_ngr <- as.data.frame(min_fretable_ngr)
+min_fretable_ngr$share <- min_fretable_ngr[, 2]/nrow(ngramunique) * 100
+names(min_fretable_ngr) <- c("Minimum # of occurences", "# of unique 2-grams", "Share in total # of unique 2-grams")
+
+```
+
+The  Twitter table contains  a total of
+`r sprintf("%1.1f", ngramuniqueFreq[[2]]/10^6) ` million 2-grams, with  `r sprintf("%1.0f", nrow(ngramunique)/1000) ` thousand unqiue 2-grams.
+
+Out of these unique 2-grams, `r sprintf("%0d", nrow(ngramuniqueFreq[[3]])) ` 2-grams (this is thus `r sprintf("%1.2f", nrow(ngramuniqueFreq[[3]])/nrow(ngramunique) * 100) ` %) correspond to 90% of all 2-gram occurences.
+
+
 
 
