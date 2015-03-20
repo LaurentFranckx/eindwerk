@@ -243,9 +243,9 @@ Finally, we consider the possibility that the 2-grams may follow a power law.
 
 
 ```{r, echo=FALSE, cache=TRUE}
-plot(FreqPow2Gr)
-lines(FreqPow2Gr)
-boot_res <- bootstrap_p(FreqPow2Gr, xmins = FreqPow2Gr$getXmin())
+# plot(FreqPow2Gr)
+# lines(FreqPow2Gr)
+# boot_res <- bootstrap_p(FreqPow2Gr, xmins = FreqPow2Gr$getXmin())
 rm()
 ```
 
