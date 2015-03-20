@@ -36,41 +36,81 @@ Although foreign words have crept inside the database, we have left them as they
 
 
 ```{r, echo=FALSE, cache=TRUE}
-setwd("D:/coursera/dsc_capstone")
 library("poweRlaw")
+
+CutoffTable <- function(df, freq_val, value){
+  df$sum_of_freq <- cumsum(df[, freq_val])
+  total_count <- sum(df[, freq_val])
+  df$sum_of_shares <- df$sum_of_freq/total_count
+  df_low <- df[df$sum_of_shares < value,   ]
+  return(list(df, total_count, df_low))
+}
+setwd("D:/coursera/dsc_capstone")
+folder_txt <- file.path("Coursera-SwiftKey","final","en_US")
+or_table <- readLines(file.path(folder_txt, "en_US.twitter.txt"))
 TestFreqTable <- read.table("US.twitterunique.txt", stringsAsFactors = FALSE)
 names(TestFreqTable) <- c("freq", "word")
 TestFreqTable <- TestFreqTable[order(TestFreqTable$freq, decreasing = TRUE), ]
+TestFreqList <- CutoffTable(TestFreqTable, "freq", 0.9)
+
+min_fretable <- rbind(c(1, nrow(TestFreqTable[TestFreqTable$freq > 1, ])), c(2,nrow( TestFreqTable[TestFreqTable$freq > 2, ])))
+min_fretable <- rbind(min_fretable, c(9, nrow(TestFreqTable[TestFreqTable$freq > 9, ])))
+min_fretable <- rbind(min_fretable, c(99, nrow(TestFreqTable[TestFreqTable$freq > 99, ])))
+min_fretable <- rbind(min_fretable, c(999, nrow(TestFreqTable[TestFreqTable$freq > 999,])))
+min_fretable <- rbind(min_fretable, c(9999, nrow(TestFreqTable[TestFreqTable$freq > 9999, ])))
+min_fretable <- as.data.frame(min_fretable)
+names(min_fretable) <- c("Minimum number of occurences", "Number of unique words")
 
 
 ```
 
-Using the "cleaned" version of the Twitter file, we have counted the number of occurences of each word in the file.
+The "uncleaned" version of the Twitter table contains `r sprintf("%1.1f", length(or_table)/10^6)` millions lines of text. 
+
+When we limit the table to alphanumeric characters, it contains a total of
+`r sprintf("%1.0f", TestFreqList[[2]]/10^6) ` million occurences of words, with  `r sprintf("%1.0f", nrow(TestFreqTable)/1000) ` thousand unique words.
+
+Out of these unique words, `r sprintf("%0d", nrow(TestFreqList[[3]])) ` words (this is thus `r sprintf("%1.2f", nrow(TestFreqList[[3]])/nrow(TestFreqTable) * 100) ` %) correspond to 90% of all word occurences.
+
+Another indication of the relative frequency with which words occur is to compare how many words 
+appear a minimum number of times in the whole database: 
+
+```{r}
+#summary(TestFreqTable$freq)
+
+min_fretable
+
+```
+
+Thus, `r nrow(TestFreqTable[TestFreqTable$freq > 1, ])` individual words appear more than once in the database,
+`r nrow(TestFreqTable[TestFreqTable$freq > 2, ])` individual words appear more than twice in the database, etc.
+
+The general skewness of the frequency of words is confirmed when we look at the summary statistics of the number of counts: 
 
 ```{r}
 summary(TestFreqTable$freq)
-
 ```
 
-This clearly suggests a very skewed distribution. 
+It has been suggested that the counts of individuals words in a corpus generally follows a power law.
 
 
 ```{r, echo=FALSE, cache=TRUE}
 freq_count <- TestFreqTable$freq
 FreqPow <- displ$new(freq_count)
-FreqPow$getXmin()
+#FreqPow$getXmin()
 #USBlogFreqPowPars <- estimate_pars(USBlogFreqPow, pars = NULL)
 FreqPowMin <- estimate_xmin(FreqPow, pars = NULL)
 FreqPow$setXmin(FreqPowMin)
-FreqPowBoot <- bootstrap_p(FreqPow, xmins = FreqPow$getXmin())
+df <- cbind(FreqPow$internal$freq,FreqPow$internal$values)
+head(df)
+tail(df)
 ```
+
+Therefore, we calculate 
 
 ```{r, echo=FALSE, cache=TRUE}
-plot(FreqPow)
-lines(FreqPow)
+# plot(FreqPow)
+# lines(FreqPow)
+# boot_res <- bootstrap_p(FreqPow, xmins = FreqPow$getXmin())
 ```
 
-
-We have tested whether the distribution of the frequency of the unique word counts follows a power distribution.
-With a p-value of `r sprintf("%.2f",FreqPowBoot$p)`, we see that the null
 
