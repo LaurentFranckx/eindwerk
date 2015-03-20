@@ -4,15 +4,16 @@ SearchStrCorpus <- function(searchstring, corpus){
   stringlenth <- length(splitstring)
   if(stringlenth < 4){
     search_string <- paste(searchstring, " ", sep="")
-    SearchClStrCorpus(search_string, stringlenth)
+#    SearchClStrCorpus(search_string, stringlenth)
     } else {
-      stop("Not ready yet")
+      search_string <- paste(splitstring[stringlenth -2], splitstring[stringlenth -1], splitstring[stringlenth], "", sep=" ")
+      stringlenth <- 3
     }
-  
+  SearchClStrCorpus(search_string, stringlenth, corpus)
 }
   
   
-SearchClStrCorpus <- function(search_string, strgtgth){
+SearchClStrCorpus <- function(search_string, strgtgth, corpus){
   load(paste(corpus, strgtgth +1, "Markov.RData" , sep= ""))
   searchcorpus <- get(paste(corpus, strgtgth +1, "Markov", sep ="" ))
   ML1_df <- searchcorpus$ML1
