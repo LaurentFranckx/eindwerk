@@ -2,6 +2,7 @@
 SearchStrCorpus <- function(searchstring, corpus){
   splitstring <- strsplit(searchstring, " ")[[1]]
   stringlenth <- length(splitstring)
+  or_stringlenth <- stringlenth
   if(stringlenth < 4){
     search_string <- paste(searchstring, " ", sep="")
 #    SearchClStrCorpus(search_string, stringlenth)
@@ -9,7 +10,27 @@ SearchStrCorpus <- function(searchstring, corpus){
       search_string <- paste(splitstring[stringlenth -2], splitstring[stringlenth -1], splitstring[stringlenth], "", sep=" ")
       stringlenth <- 3
     }
-  SearchClStrCorpus(search_string, stringlenth, corpus)
+  result <- SearchClStrCorpus(search_string, stringlenth, corpus)
+  if(nrow(result) == 0) {
+    cat("No results found in this iteration. \n")
+    if(or_stringlenth > 2){
+      search_string <- paste(splitstring[or_stringlenth -1], splitstring[or_stringlenth],  sep=" ")
+      cat("New search string is: ", search_string, ".\n", sep="")
+#      stringlenth <- 2
+      result <- SearchStrCorpus(search_string, corpus)
+    } else {
+        search_string <- paste(splitstring[or_stringlenth],  sep=" ")
+        cat("New search string is: ", search_string, ".\n")
+      #      stringlenth <- 2
+        result <- SearchStrCorpus(search_string, corpus)
+      
+    }
+    
+    
+    } else {
+      return(result)
+    }
+  return(result)
 }
   
   
@@ -20,8 +41,9 @@ SearchClStrCorpus <- function(search_string, strgtgth, corpus){
   names(ML1_df) <- gsub("to_predict","V3", names(ML1_df) )
   names(ML1_df) <- gsub("V5","V3", names(ML1_df) )
   ML1_est <- ML1_df[ML1_df$first == search_string, c("V3", "Bayes_prob")]
-  ML_est <- list()
-  ML_est[["ML1"]] <- ML1_est
+  #ML_est <- list()
+  #ML_est <- matrix()
+  ML_est <- ML1_est
   if(length(ML1_est) == 0){
     return(ML1_est)
   } else {
@@ -29,7 +51,7 @@ SearchClStrCorpus <- function(search_string, strgtgth, corpus){
     names(ML2_df) <- gsub("to_predict","V3", names(ML2_df) )
     names(ML2_df) <- gsub("V5","V3", names(ML2_df) )
     ML2_est <- ML2_df[ML2_df$first == search_string, c("V3", "Bayes_prob") ]
-    ML_est[["ML2"]] <- ML2_est
+    ML_est <- rbind(ML_est, ML2_est)
     if(length(ML2_est) == 0){
       return(ML_est)
     } else {
@@ -37,7 +59,7 @@ SearchClStrCorpus <- function(search_string, strgtgth, corpus){
       names(ML3_df) <- gsub("to_predict","V3", names(ML3_df) )
       names(ML3_df) <- gsub("V5","V3", names(ML3_df) )
       ML3_est <- ML3_df[ML3_df$first == search_string, c("V3", "Bayes_prob")]
-      ML_est[["ML3"]] <- ML3_est
+      ML_est <- rbind(ML_est, ML3_est)
       return(ML_est)
     }
     
