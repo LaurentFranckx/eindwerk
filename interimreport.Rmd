@@ -38,7 +38,7 @@ Although foreign words have crept inside the database, we have left them as they
 ```{r, echo=FALSE, cache=TRUE}
 library("poweRlaw")
 library("plyr")
-library("ggplot")
+library("ggplot2")
 
 CutoffTable <- function(df, freq_val, value){
   df$sum_of_freq <- cumsum(df[, freq_val])
@@ -86,46 +86,49 @@ qplot(MinOccur, data= GlobFreqTable2, geom = "bar", fill = time, weight = Share,
 #GlobFreqTable <- GlobFreqTable[order(GlobFreqTable$freq, decreasing = TRUE), ]
 TestFreqList <- lapply(freq_tables, CutoffTable, "freq", 0.9)
 
-"Lines of text (in millions)" <- c(sprintf("%1.1f", length(or_tables[["blogs"]])/10^6 ),sprintf("%1.1f", length(or_tables[["twitter"]])/10^6 ),sprintf("%1.1f", length(or_tables[["news"]])/10^6 ))
+textlines <- c(sprintf("%1.1f", length(or_tables[["blogs"]])/10^6 ),sprintf("%1.1f", length(or_tables[["twitter"]])/10^6 ),sprintf("%1.1f", length(or_tables[["news"]])/10^6 ))
+textlines <- as.numeric(textlines)
 
-"Word count (in millions)" <- c(sprintf("%1.1f", TestFreqList[["blogs"]]$Count/10^6 ),sprintf("%1.1f", TestFreqList[["twitter"]]$Count/10^6 ),sprintf("%1.1f", TestFreqList[["news"]]$Count/10^6 ))
+wordcount <- c(sprintf("%1.1f", TestFreqList[["blogs"]]$Count/10^6 ),sprintf("%1.1f", TestFreqList[["twitter"]]$Count/10^6 ),sprintf("%1.1f", TestFreqList[["news"]]$Count/10^6 ))
+wordcount <- as.numeric(wordcount)
 
-c(sprintf("%1.1f", nrow(TestFreqList[["blogs"]]$LowDF)/10^3 ),sprintf("%1.1f", nrow(TestFreqList[["twitter"]]$LowDF)/10^3 ),sprintf("%1.1f", nrow(TestFreqList[["news"]]$LowDF)/10^3 ))
+uniquewords <- c(sprintf("%1.1f", nrow(TestFreqList[["blogs"]]$OrDF)/10^3 ),sprintf("%1.1f", nrow(TestFreqList[["twitter"]]$OrDF)/10^3 ),sprintf("%1.1f", nrow(TestFreqList[["news"]]$OrDF)/10^3 ))
+uniquewords <- as.numeric(uniquewords)
 
-knitr::kable(SumTable, caption = "Distribution of unique words counts")
+highshare <- c(sprintf("%1.0f", nrow(TestFreqList[["blogs"]]$LowDF)/10^3 ),sprintf("%1.0f", nrow(TestFreqList[["twitter"]]$LowDF)/10^3 ),sprintf("%1.0f", nrow(TestFreqList[["news"]]$LowDF)/10^3 ))
+highshare <- as.numeric(highshare)
+
+SummarTableWords <- cbind(textlines,wordcount)
+SummarTableWords <- cbind(SummarTableWords,uniquewords)
+SummarTableWords <- cbind(SummarTableWords,highshare)
+SummarTableWords <- as.data.frame(SummarTableWords)
+SummarTableWords$highsharrel <-  with(SummarTableWords,sprintf("%0.2f",highshare/(wordcount *10^3) *100))
+row.names(SummarTableWords) <- c("blogs","twitter","news")
+SummarTableWords <- SummarTableWords[, names(SummarTableWords) != "highshare"]
+names(SummarTableWords) <- c("Lines of text (10^6)", "Word count (10^6)" , "Unique words (10^3)", "Perc90")
+
+
+knitr::kable(SummarTableWords, caption = "Key summary statistics")
 
 #GlobFreqTable$logMinOccur <- log10(GlobFreqTable$MinOccur)
 
 ```
 
-The "uncleaned" version of the "blogs"", "Twitter"" and "news"" table contain, resp `r sprintf("%1.1f", length(or_tables[["twitter"]])/10^6 ), ` millions lines of text. 
+The table above gives some key information on "blogs", "Twitter"" and "news" databases
 
-When we limit the table to alphanumeric characters, it contains a total of
-`r sprintf("%1.0f", TestFreqList[[2]]/10^6) ` million occurences of words, with  `r sprintf("%1.0f", nrow(GlobFreqTable)/1000) ` thousand unique words.
+- the first column gives, for the "uncleaned" version of the databases, the number of lines of text
+- the second column gives, for the databases restricted to alphanumeric characters, the total number of words
+- the third column gives, for the databases restricted to alphanumeric characters, the number of unique words
+- the fourth column gives (in %), the number of unique words corresponding to 90% of all word occurences. 
 
-Out of these unique words, `r sprintf("%0d", nrow(TestFreqList[[3]])) ` words (this is thus `r sprintf("%1.2f", nrow(TestFreqList[[3]])/nrow(GlobFreqTable) * 100) ` %) correspond to 90% of all word occurences.
-
-Another indication of the relative frequency with which words occur is to compare how many words 
-appear a minimum number of times in the whole database: 
+The general skewness of the frequency of words is confirmed when we look at the summary statistics of the number of counts:  
 
 ```{r, echo=FALSE}
-#summary(GlobFreqTable$freq)
-rm(or_table_twit)
+knitr::kable(    sapply(freq_tables, function(x) summary(x[, "freq"])), caption = "Summary statistics for word counts")
+rm(or_tables)
 gc()
-
-
-
-
 ```
 
-Thus, `r nrow(TestFreqTable[TestFreqTable$freq > 1, ])` individual words appear more than once in the database,
-`r nrow(TestFreqTable[TestFreqTable$freq > 2, ])` individual words appear more than twice in the database, etc.
-
-The general skewness of the frequency of words is confirmed when we look at the summary statistics of the number of counts: 
-
-```{r, echo=FALSE}
-summary(TestFreqTable$freq)
-```
 
 
 Still another way to look at the data is to calculate how many individual words appear in the database with a given count. We represent here the first five and the last five lines of the table containing this information (henceforth the "frequency count table"). 
@@ -133,32 +136,70 @@ Still another way to look at the data is to calculate how many individual words 
 
 
 ```{r, echo=FALSE, cache=TRUE}
-freq_count <- TestFreqTable$freq
-FreqPow <- displ$new(freq_count)
+
+
+CreateCountTable <- function(corpus){
+  freqtable <- freq_tables[[corpus]]
+  freq_count <- freqtable$freq
+  FreqPow <- displ$new(freq_count)
 #FreqPow$getXmin()
 #USBlogFreqPowPars <- estimate_pars(USBlogFreqPow, pars = NULL)
-FreqPowMin <- estimate_xmin(FreqPow, pars = NULL)
-FreqPow$setXmin(FreqPowMin)
-FrqvsVal <- cbind(FreqPow$internal$freq,FreqPow$internal$values)
-FrqvsVal <- as.data.frame(FrqvsVal)
-names(FrqvsVal ) <- c("Number of individuals words", "Number of counts in the whole database")
+  FreqPowMin <- estimate_xmin(FreqPow, pars = NULL)
+  FreqPow$setXmin(FreqPowMin)
+  FrqvsVal <- cbind(FreqPow$internal$freq,FreqPow$internal$values)
+  FrqvsVal <- as.data.frame(FrqvsVal)
+  names(FrqvsVal ) <- c(paste("# of individuals words", corpus), paste("# of counts in", corpus))
+  return(FrqvsVal) 
+}
+
+CounttableTwit <- CreateCountTable("twitter")
+Counttableblogs <- CreateCountTable("blogs")
+Counttablenews <- CreateCountTable("news")
+
+
 ```
 
 ```{r, echo=FALSE, cache=TRUE}
-head(FrqvsVal )
-tail(FrqvsVal )
-most_freq_word <- TestFreqTable[ TestFreqTable$freq == max(TestFreqTable$freq) , "word" ]
-most_freq_word 
+head_table <- cbind(head(CounttableTwit),head(Counttableblogs))
+head_table <- cbind(head_table,head(Counttablenews))
+head_table
+
+tail_table <- cbind(tail(CounttableTwit),tail(Counttableblogs))
+tail_table <- cbind(tail_table,tail(Counttablenews))
+tail_table
+
+
+
+#most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq == max(freq_tables[[x]]$freq) , "word" ])
+most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq %in% tail_table[, paste(paste("# of counts in", x)) ] , "word" ])
+
+
 ```
 
-Thus `r sprintf("%1.0f",FrqvsVal[1, 1]/1000)` thousand individual words appear exactly `r FrqvsVal[1, 2]` time in the database, while `r FrqvsVal[nrow(FrqvsVal), 1]` word (not surprisingly, this is " `r most_freq_word` ""), appears exactly `r FrqvsVal[nrow(FrqvsVal), 2]` times in the database.
+Thus, for instance, `r sprintf("%1.0f",head_table[1, 1]/1000)` thousand individual words appear exactly `r head_table[1, 2]` time in the Twitter database, while `r head_table[nrow(head_table), 1]` word  appears exactly `r head_table[nrow(head_table), 2]` times in the Twitter database.
 
-Finally, we can have a look at a sample of words that appear very infrequently in the database: 
+For the three databases, the 6 most frequent words, are:
+
+```{r, echo=FALSE, cache=TRUE}
+knitr::kable(most_freq_words, caption= "Most frequent words in the three databases")
+```
+
+Finally, we can have a look at a sample of words that appear very infrequently in the database (here, less than 5 times): 
 
 ```{r, echo=FALSE, cache=TRUE}
 set.seed(123)
-low_frq <- TestFreqTable[ TestFreqTable$freq < 7 , ]
-low_frq[sample(1:nrow(low_frq), 10)  , ]
+
+VeryInfWords <- function(corpus, lessthan = 5, samplesize = 10){
+  freqtable <- freq_tables[[corpus]]
+  low_frq <- TestFreqTable[ TestFreqTable$freq < lessthan , ]
+  low_frq <- low_frq[sample(1:nrow(low_frq), samplesize)  , ]
+  names(low_frq) <- c(paste("freq in", corpus), paste("word from", corpus))
+  return(low_frq)
+}
+
+fewwords <- lapply(corpusnames, VeryInfWords)
+do.call("cbind",fewwords)
+
 # head(TestFreqTable[ TestFreqTable$freq == min(TestFreqTable$freq) , ], 3)
 # 
 # head(TestFreqTable[ TestFreqTable$freq == 2 , ], 3)
@@ -168,12 +209,12 @@ low_frq[sample(1:nrow(low_frq), 10)  , ]
 # head(TestFreqTable[ TestFreqTable$freq == 4 , ], 3)
 ```
 
-These words are generally meaningless in English. 
+These words are generally meaningless in English, or are obvious spelling mistakes.  
 
 It has been suggested in the literature that the counts of individuals words in a corpus generally follows a power law, i.e. that the frequency of a word is inversely proportional to its frequency rank. Thus, the second most frequent word occurs half as often the most frequent word, the third most frequent word occurs one third as often as the most frequent word, etc - see http://en.wikipedia.org/wiki/Power_law. 
 
 
-However, a formal hypothesis has rejected this possibility (details are available on request). 
+However, a formal hypothesis has rejected this possibility for the databases we use here (details are available on request). 
 In the plot below, we have set out the logs of the variables in the "frequency count table". The straight line correspond to the best possible fit of a power law. This confirms that, for words that appear very frequently, the observations deviate substantially from the predictions of a power law. 
 
 
