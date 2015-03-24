@@ -108,7 +108,7 @@ SummarTableWords <- SummarTableWords[, names(SummarTableWords) != "highshare"]
 names(SummarTableWords) <- c("Lines of text (10^6)", "Word count (10^6)" , "Unique words (10^3)", "Perc90")
 
 
-knitr::kable(SummarTableWords, caption = "Key summary statistics")
+knitr::kable(SummarTableWords, caption = "Key summary statistics for unique words")
 
 #GlobFreqTable$logMinOccur <- log10(GlobFreqTable$MinOccur)
 
@@ -138,8 +138,8 @@ Still another way to look at the data is to calculate how many individual words 
 ```{r, echo=FALSE, cache=2}
 
 
-CreateCountTable <- function(corpus){
-  freqtable <- freq_tables[[corpus]]
+CreateCountTable <- function(tablelist, corpus){
+  freqtable <- tablelist[[corpus]]
   freq_count <- freqtable$freq
   FreqPow <- displ$new(freq_count)
 #FreqPow$getXmin()
@@ -152,9 +152,9 @@ CreateCountTable <- function(corpus){
   return(FrqvsVal) 
 }
 
-CounttableTwit <- CreateCountTable("twitter")
-Counttableblogs <- CreateCountTable("blogs")
-Counttablenews <- CreateCountTable("news")
+CounttableTwit <- CreateCountTable(freq_tables, "twitter")
+Counttableblogs <- CreateCountTable(freq_tables, "blogs")
+Counttablenews <- CreateCountTable(freq_tables, "news")
 
 
 ```
@@ -189,15 +189,15 @@ Finally, we can have a look at a sample of words that appear very infrequently i
 ```{r, echo=FALSE, cache=2}
 set.seed(123)
 
-VeryInfWords <- function(corpus, lessthan = 5, samplesize = 10){
-  freqtable <- freq_tables[[corpus]]
+VeryInfWords <- function( corpus, tables, lessthan = 5, samplesize = 10){
+  freqtable <- tables[[corpus]]
   low_frq <- TestFreqTable[ TestFreqTable$freq < lessthan , ]
   low_frq <- low_frq[sample(1:nrow(low_frq), samplesize)  , ]
   names(low_frq) <- c(paste("freq in", corpus), paste("word from", corpus))
   return(low_frq)
 }
 
-fewwords <- lapply(corpusnames, VeryInfWords)
+fewwords <- lapply(corpusnames, VeryInfWords, tables = freq_tables)
 do.call("cbind",fewwords)
 
 # head(TestFreqTable[ TestFreqTable$freq == min(TestFreqTable$freq) , ], 3)
@@ -268,23 +268,25 @@ qplot(MinOccur, data= GlobFreqTable2Gr2, geom = "bar", fill = time, weight = Sha
 TestFreqList2Gr <- lapply(freq_tables2Gr, CutoffTable, "freq", 0.9)
 
 TwoGrcount <- c(sprintf("%1.1f", TestFreqList2Gr[["blogs"]]$Count/10^6 ),sprintf("%1.1f", TestFreqList2Gr[["twitter"]]$Count/10^6 ),sprintf("%1.1f", TestFreqList2Gr[["news"]]$Count/10^6 ))
-wordcount <- as.numeric(TwoGrcount)
+TwoGrcount <- as.numeric(TwoGrcount)
 
-TwoGruniquewords <- c(sprintf("%1.1f", nrow(TestFreqList2Gr[["blogs"]]$OrDF)/10^3 ),sprintf("%1.1f", nrow(TestFreqList2Gr[["twitter"]]$OrDF)/10^3 ),sprintf("%1.1f", nrow(TestFreqList2Gr[["news"]]$OrDF)/10^3 ))
-uniquewords <- as.numeric(TwoGruniquewords)
+TwoGrunique <- c(sprintf("%1.1f", nrow(TestFreqList2Gr[["blogs"]]$OrDF)/10^3 ),sprintf("%1.1f", nrow(TestFreqList2Gr[["twitter"]]$OrDF)/10^3 ),sprintf("%1.1f", nrow(TestFreqList2Gr[["news"]]$OrDF)/10^3 ))
+TwoGrunique <- as.numeric(TwoGrunique)
 
 TwoGrhighshare <- c(sprintf("%1.0f", nrow(TestFreqList2Gr[["blogs"]]$LowDF)/10^3 ),sprintf("%1.0f", nrow(TestFreqList2Gr[["twitter"]]$LowDF)/10^3 ),sprintf("%1.0f", nrow(TestFreqList2Gr[["news"]]$LowDF)/10^3 ))
-highshare <- as.numeric(TwoGrhighshare)
+TwoGrhighshare <- as.numeric(TwoGrhighshare)
 
 
-SummarTable2Gr <- cbind(TwoGrcount,TwoGruniquewords)
+SummarTable2Gr <- cbind(TwoGrcount,TwoGrunique)
 SummarTable2Gr <- cbind(SummarTable2Gr,TwoGrhighshare)
 SummarTable2Gr <- as.data.frame(SummarTable2Gr)
-SummarTable2Gr$highsharrel <-  with(SummarTable2Gr,sprintf("%0.2f",highshare/(wordcount *10^3) *100))
+SummarTable2Gr$highsharrel <-  with(SummarTable2Gr,sprintf("%0.2f",TwoGrhighshare/(TwoGrcount *10^3) *100))
 row.names(SummarTable2Gr) <- c("blogs","twitter","news")
 SummarTable2Gr <- SummarTable2Gr[, names(SummarTable2Gr) != "TwoGrhighshare"]
 names(SummarTable2Gr) <- c( "2-gram count (10^6)" , "Unique 2-gram (10^3)", "Perc90")
 
+
+knitr::kable(SummarTable2Gr, caption = "Key summary statistics for 2-grams")
 #ngramunique <- ngramunique[order(ngramunique$freq, decreasing = TRUE), ]
 #ngramuniqueFreq <-  CutoffTable(ngramunique, "freq", 0.9)
 # min_fretable_ngr$share <- min_fretable_ngr[, 2]/nrow(ngramunique) * 100
@@ -292,33 +294,46 @@ names(SummarTable2Gr) <- c( "2-gram count (10^6)" , "Unique 2-gram (10^3)", "Per
 
 ```
 
-The  Twitter table contains  a total of
-`r sprintf("%1.1f", ngramuniqueFreq[[2]]/10^6) ` million 2-grams, with  `r sprintf("%1.0f", nrow(ngramunique)/1000) ` thousand unqiue 2-grams.
 
-Out of these unique 2-grams, `r sprintf("%0d", nrow(ngramuniqueFreq[[3]])) ` 2-grams (this is thus `r sprintf("%1.2f", nrow(ngramuniqueFreq[[3]])/nrow(ngramunique) * 100) ` %) correspond to 90% of all 2-gram occurences.
+The table above gives some key information on "blogs", "Twitter"" and "news" databases
 
-Another indication of the relative frequency with which 2-grams occur is to compare how many 2-grams 
-appear a minimum number of times in the whole database: 
+- the first column gives, for the databases restricted to alphanumeric characters, the total number of 2-grams
+- the second column gives, for the databases restricted to alphanumeric characters, the number of unique 2-grams
+- the third column gives (in %), the number of unique 2-grams corresponding to 90% of all 2-gram occurences. 
 
-```{r, echo=FALSE}
-#summary(TestFreqTable$freq)
-min_fretable_ngr
-
-```
-
-Thus, `r nrow(ngramunique[ngramunique$freq > 1, ])` individual 2-grams appear more than once in the database,
-`r nrow(ngramunique[ngramunique$freq > 2, ])` individual 2-grams appear more than twice in the database, etc.
-
-Another indication of the  skewness of the frequency of 2-grams is obtained when we look at the summary statistics of the number of counts: 
+The general skewness of the frequency of words is confirmed when we look at the summary statistics of the number of counts:  
 
 ```{r, echo=FALSE}
-summary(ngramunique$freq)
+
+knitr::kable(    sapply(freq_tables2Gr, function(x) summary(x[, "freq"])), caption = "Summary statistics for 2-grams")
+rm(or_tables)
+gc()
 ```
+
+
 
 
 Still another way to look at the data is to calculate how many individual 2-grams with a given count appear in the database. We represent here the first five and the last five lines of the table containing this information (henceforth the "frequency count table"). 
 
 ```{r, echo=FALSE, cache=2}
+CounttableTwit2Gr <- CreateCountTable(freq_tables2Gr, "twitter")
+Counttableblogs2Gr  <- CreateCountTable(freq_tables2Gr, "blogs")
+Counttablenews2Gr <- CreateCountTable(freq_tables2Gr, "news")
+
+head_table2Gr <- cbind(head(CounttableTwit2Gr),head(Counttableblogs2Gr))
+head_table2Gr <- cbind(head_table2Gr,head(Counttablenews2Gr))
+head_table2Gr
+
+tail_table2gr <- cbind(tail(CounttableTwit2Gr),tail(Counttableblogs2Gr))
+tail_table2gr <- cbind(tail_table2gr,tail(Counttablenews2Gr))
+tail_table2gr
+
+
+
+#most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq == max(freq_tables[[x]]$freq) , "word" ])
+most_freq_2gr <- sapply(corpusnames, function(x)   freq_tables2Gr[[x]][ freq_tables2Gr[[x]]$freq %in% tail_table2gr[, paste(paste("# of counts in", x)) ] , "word" ])
+
+
 # freq_count_ngr  <- ngramunique$freq
 # FreqPow2Gr <- displ$new(freq_count_ngr)
 # #FreqPow2Gr$getXmin()
@@ -337,15 +352,23 @@ Still another way to look at the data is to calculate how many individual 2-gram
 # most_freq_2gr 
 ```
 
-Thus `r sprintf("%1.0f", FrqvsVal2Gr[1, 1]/1000)` thousand individual 2-grams appear exactly `r FrqvsVal2Gr[1, 2]` time in the database, while `r FrqvsVal2Gr[nrow(FrqvsVal2Gr), 1]` 2-gram (this is " `r most_freq_2gr` ""), appears exactly `r FrqvsVal2Gr[nrow(FrqvsVal2Gr), 2]` times in the database.
+Thus, for instance, `r sprintf("%1.0f",head_table2Gr[1, 1]/1000)` thousand individual 2-grams appear exactly `r head_table[1, 2]` time in the Twitter database, while `r head_table2Gr[nrow(head_table2Gr), 1]` individual 2-grams  appears exactly `r head_table2Gr[nrow(head_table2Gr), 2]` times in the Twitter database.
+
+For the three databases the 6 most frequent 2-grams are:
+
+```{r, echo=FALSE, cache=2}
+knitr::kable(most_freq_2gr , caption= "Most frequent words in the three databases")
+```
+
 
 
 Finally, we can have a look at a sample of 2-grams that appear very infrequently in the database: 
 
 ```{r, echo=FALSE, cache=2}
 set.seed(123)
-low_frq <- ngramunique[ ngramunique$freq < 7 , ]
-low_frq[sample(1:nrow(low_frq), 10)  , ]
+fewwords <- lapply(corpusnames, VeryInfWords, tables = freq_tables2Gr)
+do.call("cbind",fewwords)
+
 ```
 
 We see that there are still a lot of these 2-grams that make little sense in English, but compared to individual words, there are also some "low frequency" 2-grams that do make sense.
