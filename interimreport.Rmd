@@ -8,31 +8,24 @@ output: html_document
 #Introduction
 
 This paper presents intermediate results in the construction of a predictive text model. The final objective
-of this model is to provide users for suggestions for autocompleting a sentence they have started. 
+of this project is to construct a Shiny app which provides users with suggestions for autocompleting a sentence they have started. 
 
 The training data set has been obtained from the Coursera website, but are originally  from a corpus called HC Corpora (www.corpora.heliohost.org). The complete set consists of databases in English, German, Russian and Finnish. In this project we will limit ourselves to the English database. 
 
 The English database itself is composed of three files, each composed of several hundreds of thousands of text lines from blogs, news cites and Twitter. 
 
-As a first step in the paper, we will  explain the approach used to the cleaning of the data. Next, we will summarize the main descriptive statistics for each dataset, and explore how these compare to each other. Finally, we will describe the next steps we intend to undertake in order to construct our model. 
+As a first step, we will summarize the main descriptive statistics for each dataset, and explore how these compare to each other - these statistics will be provided for individual words and for 2-grams (for a definition, see further). 
+As a next step, we will  explain the approach used to the cleaning  and the organisation of the data.
+Finally, we will describe the next steps we intend to undertake in order to construct our predictive model. 
 
-
-#Data cleaning
-
-As a first step in our project, we have cleaned the original data. 
-
-- First, we have modified the encoding from "UTF-8" to "latin1" - not doing so would lead to the creation of unreadable characters.
-- Second, we have removed any numbers present.
-- Third we have removed all the words that are banned by Google for their profane or offensive character.
-- Fourth, we have removed all white spaces that have resulted frm the previous steps. 
-
-Howevern, punctuation and other non-alphanumeric characters are an integral part of the sentence (especially in the case of Twitter), as have therefore been kept as they were.  
-
-Although foreign words have crept inside the database, we have left them as they were. Indeed, some foreign words are deliberately used in English to convey a specific message. If foreign sentences have been included inadvertently in the database, they are likely to be eliminated in the next step of the analysis, where we have eliminated all words that did not occur a minimum number of times. 
 
 
 
 #Descriptive statistics for the unique words
+
+Before undertaking any concrete modelling steps, it is important to understand the main features of the data. As we shall see below, our understanding of the data will allow us to drastically save on computer resources without jeopardizing predictive accuracy.
+
+On prior grounds, one would expect the three databases to differ on some important points. For instance, Twitter can be expected to contain relatively more abbreviations, relatively few stopwords, and more non-alphanumerical symbols than the other databases. We would also expect Twitter to contain less grammatically correct sentences. The differences between the "blogs" and the "news" database are probably less pronounced, but one would expect the "news" database to use a more formal vocabulary, and to contain less spelling and grammatical mistakes. Therefore, we will analyse the key statistics separately.  
 
 
 ```{r, echo=FALSE, cache=2}
@@ -79,7 +72,7 @@ for(name in corpusnames){
 
 GlobFreqTable <- Reduce("join", min_fretables)
 GlobFreqTable2 <- reshape(GlobFreqTable, idvar ="MinOccur", times = corpusnames , varying = paste("Share",corpusnames,sep="") , v.names = "Share", direction = "long")
-qplot(MinOccur, data= GlobFreqTable2, geom = "bar", fill = time, weight = Share, position = "dodge", binwidth = 5) + xlab("Minimal occurence of word") + ylab("Count in corpus")
+
 
 
 #names(TestFreqTable) <- c("freq", "word")
@@ -118,8 +111,10 @@ The table above gives some key information on "blogs", "Twitter"" and "news" dat
 
 - the first column gives, for the "uncleaned" version of the databases, the number of lines of text
 - the second column gives, for the databases restricted to alphanumeric characters, the total number of words
-- the third column gives, for the databases restricted to alphanumeric characters, the number of unique words
-- the fourth column gives (in %), the number of unique words corresponding to 90% of all word occurences. 
+- the third column gives, for the databases restricted to alphanumeric characters, the number of *unique* words
+- the fourth column gives (in %), the number of *unique* words corresponding to 90% of *all* word occurences. 
+
+We see thus that the vast majority of word occurences originates from a small dictionary. 
 
 The general skewness of the frequency of words is confirmed when we look at the summary statistics of the number of counts:  
 
@@ -129,9 +124,15 @@ rm(or_tables)
 gc()
 ```
 
+These statistics confirm that the vast majority of unique words appears just a few times in the total database, but that there are some words that occur with a very high frequency. This is also illustrated by the plot below, which shows how many words appear at least, respectively, 2, 10, 20, 30, 40 or 50 times in the respective documents.
 
 
-Still another way to look at the data is to calculate how many individual words appear in the database with a given count. We represent here the first five and the last five lines of the table containing this information (henceforth the "frequency count table"). 
+```{r, echo=FALSE}
+qplot(MinOccur, data= GlobFreqTable2, geom = "bar", fill = time, weight = Share, position = "dodge", binwidth = 5) + xlab("Minimal occurence of word") + ylab("Count in corpus")
+```
+
+
+Still another way to look at the data is to calculate how many individual words appear in the database with a given count, thus for instance: how many *unique* words appear exactly 1, 2, 3 etc times? We represent here the first five and the last five lines of the table containing this information (henceforth the "frequency count table"). 
 
 
 
@@ -178,13 +179,13 @@ most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tabl
 
 Thus, for instance, `r sprintf("%1.0f",head_table[1, 1]/1000)` thousand individual words appear exactly `r head_table[1, 2]` time in the Twitter database, while `r head_table[nrow(head_table), 1]` word  appears exactly `r head_table[nrow(head_table), 2]` times in the Twitter database.
 
-For the three databases, the 6 most frequent words, are:
+For each of the three data files, the 6 most frequent words are:
 
 ```{r, echo=FALSE, cache=2}
 knitr::kable(most_freq_words, caption= "Most frequent words in the three databases")
 ```
 
-Finally, we can have a look at a sample of words that appear very infrequently in the database (here, less than 5 times): 
+Finally, we can have a look at a random sample of words that appear very infrequently in the database (here, less than 5 times): 
 
 ```{r, echo=FALSE, cache=2}
 set.seed(123)
@@ -228,9 +229,18 @@ rm()
 ```
 
 
-The next question we need to consider is the distribution of n-grams, i.e.  contiguous sequences of n items in the database. For the purposes of this project, we have constructed 2-grams, 3-grams and 4-grams. 
+Nevertheless, we can conclude that leaving out words that do not occur with a minimal frequency in each dataset, is unlikely to affect the predictive performance of the model. We will discuss below how we have determined this "minimal" frequency.
 
-As a full discussion of the properties of all n-grams would take us too far, we focus here on the analysis of 2-grams.
+
+#Descriptive statistics for 2-grams
+
+The next question we need to consider is the distribution of n-grams, i.e.  contiguous sequences of n items in the database. As we shall discuss below, they will be the cornerstone of the predictive model. 
+
+For the purposes of this project, we have constructed 2-grams, 3-grams and 4-grams. 
+
+As a full discussion of the properties of all n-grams would take us beyond the scope of this paper, we focus here on the analysis of 2-grams. A full analysis is available on request. 
+
+As in the analysis of individual words, we have performed a separate analysis for the "blogs", "Twitter"" and "news" datasets. 
 
 
 
@@ -263,7 +273,7 @@ for(name in corpusnames){
 
 GlobFreqTable2Gr <- Reduce("join", min_fretables2Gr)
 GlobFreqTable2Gr2  <- reshape(GlobFreqTable2Gr, idvar ="MinOccur", times = corpusnames , varying = paste("Share",corpusnames,sep="") , v.names = "Share", direction = "long")
-qplot(MinOccur, data= GlobFreqTable2Gr2, geom = "bar", fill = time, weight = Share, position = "dodge", binwidth = 5) + xlab("Minimal occurence of 2-gram") + ylab("Count in corpus")
+
 
 TestFreqList2Gr <- lapply(freq_tables2Gr, CutoffTable, "freq", 0.9)
 
@@ -295,13 +305,15 @@ knitr::kable(SummarTable2Gr, caption = "Key summary statistics for 2-grams")
 ```
 
 
-The table above gives some key information on "blogs", "Twitter"" and "news" databases
+The table above gives some key information on "blogs", "Twitter"" and "news" databases:
 
 - the first column gives, for the databases restricted to alphanumeric characters, the total number of 2-grams
-- the second column gives, for the databases restricted to alphanumeric characters, the number of unique 2-grams
-- the third column gives (in %), the number of unique 2-grams corresponding to 90% of all 2-gram occurences. 
+- the second column gives, for the databases restricted to alphanumeric characters, the number of *unique* 2-grams
+- the third column gives (in %), the number of *unique* 2-grams corresponding to 90% of *all* 2-gram occurences. 
 
-The general skewness of the frequency of words is confirmed when we look at the summary statistics of the number of counts:  
+We see thus that the vast majority of 2-gram occurences originates from a small set of *unique* 2-grams. However, as we should have expected, the share of these *unique* 2-grams in the total dataset is much larger than for individual words.   
+
+The general skewness of the frequency of 2-grams is confirmed when we look at the summary statistics of the number of counts:  
 
 ```{r, echo=FALSE}
 
@@ -311,15 +323,30 @@ gc()
 ```
 
 
+These statistics confirm that the vast majority of unique 2-grams appears just a few times in the total database, but that there are some 2-grams that occur with a very high frequency. This is also illustrated by the plot below, which shows how many 2-grams appear at least, respectively, 2, 10, 20, 30, 40 or 50 times in the respective documents.
 
 
-Still another way to look at the data is to calculate how many individual 2-grams with a given count appear in the database. We represent here the first five and the last five lines of the table containing this information (henceforth the "frequency count table"). 
+```{r, echo=FALSE}
+qplot(MinOccur, data= GlobFreqTable2Gr2, geom = "bar", fill = time, weight = Share, position = "dodge", binwidth = 5) + xlab("Minimal occurence of 2-gram") + ylab("Count in corpus")
+```
+
+Ad we did above for individual words, we also represent the  "frequency count table" for 2-grams: 
+
+
 
 ```{r, echo=FALSE, cache=2}
 CounttableTwit2Gr <- CreateCountTable(freq_tables2Gr, "twitter")
-Counttableblogs2Gr  <- CreateCountTable(freq_tables2Gr, "blogs")
-Counttablenews2Gr <- CreateCountTable(freq_tables2Gr, "news")
+```
 
+```{r, echo=FALSE, cache=2}
+Counttableblogs2Gr  <- CreateCountTable(freq_tables2Gr, "blogs")
+```
+
+```{r, echo=FALSE, cache=2}
+Counttablenews2Gr <- CreateCountTable(freq_tables2Gr, "news")
+``` 
+
+```{r, echo=FALSE, cache=2}
 head_table2Gr <- cbind(head(CounttableTwit2Gr),head(Counttableblogs2Gr))
 head_table2Gr <- cbind(head_table2Gr,head(Counttablenews2Gr))
 head_table2Gr
@@ -357,12 +384,12 @@ Thus, for instance, `r sprintf("%1.0f",head_table2Gr[1, 1]/1000)` thousand indiv
 For the three databases the 6 most frequent 2-grams are:
 
 ```{r, echo=FALSE, cache=2}
-knitr::kable(most_freq_2gr , caption= "Most frequent words in the three databases")
+knitr::kable(most_freq_2gr , caption= "Most frequent 2-gram in the three databases")
 ```
 
 
 
-Finally, we can have a look at a sample of 2-grams that appear very infrequently in the database: 
+Finally, we can have a look at a sample of 2-grams that appear very infrequently in each database: 
 
 ```{r, echo=FALSE, cache=2}
 set.seed(123)
@@ -383,5 +410,40 @@ Finally, we consider the possibility that the 2-grams may follow a power law.
 # boot_res <- bootstrap_p(FreqPow2Gr, xmins = FreqPow2Gr$getXmin())
 rm()
 ```
+
+#Data cleaning
+
+As the next step in our project, we have cleaned the original data: 
+
+- First, we have modified the encoding from "UTF-8" to "latin1" - not doing so would lead to the creation of unreadable characters.
+- Second, we have removed any numbers present: these are highly context-dependent and unlikely to have a high predictive value (or, conversely, easy to predict)
+- Third we have removed all the words that are banned by Google for their profane or offensive character.
+- Fourth, we have removed all white spaces that have resulted from the previous steps. 
+
+Howevern, punctuation and other non-alphanumeric characters are an integral part of the sentence (especially in the case of Twitter), and have therefore been kept as they were. Meaningless non-alphanumeric characters  are unlikely to appear frequently in the same sequences, and will thus be eliminated in the next stage.   
+
+Although foreign words have crept inside the database, we have left them as they were. Indeed, some foreign words are deliberately used in English to convey a specific message. If foreign sentences have been included inadvertently in the database, it is unlikely that similar sentences (or sentences "contaminating" English content) have appeared frequently, and they are likely to be eliminated in the next step of the analysis. 
+
+Next, we have used the "cleaned" version of the database to create a list of words and their occurence. Moreover, we have constructed a list of all n-grams (for n = 4,3,2) and counted how often each individual n-gram occurs. 
+Thus, for instance, the sentence: "This is how to count two-grams" would be split in: "this is", "is how", "how to", "to count", "count two-grams", and then we would count how often the 2-gram "this is" occurs in the dataset.
+
+For the purposes of the predictive model, we have used the Markov assumption, this is, we have assumed that the probability that a given word is the next word in a sentence only depends on the n preceding words, rather than on the complete sentence. 
+
+For instance, we have used the 4-grams to predict the probability of a word occuring conditional on the three preceeding words in the sentence. In order to do so, we have split each 4-gram in two strings, one representing the first three words and one the final word (which needs to be predicted). Because we know the count for all 4-grams and all 3-grams, it is then straighforward to calculate the conditional probability that a given word will follow a given 3-gram.
+
+As stated above, because of the general skewness of the distribution of the n-grams and in order to save computer resources, we have limited ourselves to the n-grams that appeared at least 3 times in each dataset. 
+
+For any given sentence, the prediction algorithm will then first predict the three most likely "next" words, first using the last three words of the sentence, then (if no results are obtained from the previous step) from the last two words, etc. 
+
+#Next steps
+
+With the work performed until now, two major steps remain to be done. First, test the actual performance of the model with alternative datasets. Second, to develop the "Shiny" app. It is possible that, due to the technical limitations of Shiny, our model will need to be "culled" in order to be implementable on-line.  
+
+
+
+
+
+
+
 
 
