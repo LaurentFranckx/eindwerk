@@ -124,7 +124,7 @@ rm(or_tables)
 #gc()
 ```
 
-These statistics confirm that the vast majority of unique words appears just a few times in the total database, but that there are some words that occur with a very high frequency. This is also illustrated by the plot below, which shows how the share of individual words in the set of unique words changes when we require that they appear at least, respectively, 1, 10, 20, 30, 40 or 50 times in the respective complete dataset. We see a sharp initial decrease. For instance, in all three datasets, the share of words occuring at least ten times is between (approxilately) 15 and 25%. 
+These statistics confirm that the vast majority of unique words appears just a few times in the total database, but that there are some words that occur with a very high frequency. This is also illustrated by the plot below, which shows how the share of individual words in the set of unique words changes when we require that they appear at least, respectively, 1, 10, 20, 30, 40 or 50 times in the respective complete dataset. We see a sharp initial decrease. For instance, in all three datasets, the share of words occuring at least ten times is between (approxilately) 15 and 25% of all unique words. 
 
 
 ```{r, echo=FALSE}
@@ -176,11 +176,12 @@ tail_table <- cbind(tail_table,tail(Counttablenews))
 most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq %in% tail_table[, paste("# of counts in", x) ] , "word" ])
 
 head_table <- head_table[ , c(1,3,5,6)]
-names(head_table) <- c("# of words in twitter", "# of words in twitter", "# of words in twitter", "# of counts")
+names(head_table) <- c("# of words in twitter", "# of words in blogs", "# of words in news", "# of counts")
 knitr::kable(head_table, caption = "Low frequency words")
 
+row.names(tail_table) <- NULL 
 tail_table <- tail_table[ , c(1,2,4,6)]
-names(tail_table) <- c("# of counts", "# of words in twitter", "# of words in twitter", "# of words in twitter" )
+names(tail_table) <- c("# of counts", "# of words in twitter", "# of words in blogs ", "# of words in news " )
 knitr::kable(tail_table, caption = "High frequency words")
 
 ```
@@ -211,6 +212,7 @@ VeryInfWords <- function( corpus, tables, lessthan = 5, samplesize = 10){
 
 fewwords <- lapply(corpusnames, VeryInfWords, tables = freq_tables)
 wordsample <- do.call("cbind",fewwords)
+row.names(wordsample) <- NULL 
 knitr::kable(wordsample, caption ="Random  sample of low frequency words")
 
 # head(TestFreqTable[ TestFreqTable$freq == min(TestFreqTable$freq) , ], 3)
@@ -267,7 +269,7 @@ for(name in corpusnames){
   ngramunique <- read.table(paste("US.", name , "Tokened2Gr_uniq.txt", sep=""), stringsAsFactors = FALSE)
   names(ngramunique) <- c("freq", "n-gram")
   ngramunique <- ngramunique[complete.cases(ngramunique),]
-  min_fretable <- rbind(c(2, nrow(ngramunique[ngramunique$freq > 1, ])), c(10,nrow( ngramunique[ngramunique$freq > 9, ])))
+  min_fretable <- rbind(c(1, nrow(ngramunique[ngramunique$freq > 0, ])), c(10,nrow( ngramunique[ngramunique$freq > 9, ])))
   #min_fretable <- rbind(min_fretable, c(10, nrow(ngramunique[ngramunique$freq > 9, ])))
   min_fretable <- rbind(min_fretable, c(20, nrow(ngramunique[ngramunique$freq > 19, ])))
   min_fretable <- rbind(min_fretable, c(30, nrow(ngramunique[ngramunique$freq > 29,])))
@@ -322,7 +324,7 @@ The table above gives some key information on "blogs", "Twitter"" and "news" dat
 - the second column gives, for the databases restricted to alphanumeric characters, the number of *unique* 2-grams
 - the third column gives (in %), the number of *unique* 2-grams corresponding to 90% of *all* 2-gram occurences. 
 
-We see thus that the vast majority of 2-gram occurences originates from a small set of *unique* 2-grams. However, as we should have expected, the share of these *unique* 2-grams in the total dataset is much larger than for individual words.   
+We see thus that the vast majority of 2-gram occurences originates from a small set of *unique* 2-grams. However, as we should have expected, the share of these *unique* 2-grams in the total dataset is much larger (a factor twenty) than for individual words.   
 
 The general skewness of the frequency of 2-grams is confirmed when we look at the summary statistics of the number of counts:  
 
@@ -333,11 +335,11 @@ knitr::kable(    sapply(freq_tables2Gr, function(x) summary(x[, "freq"])), capti
 ```
 
 
-These statistics confirm that the vast majority of unique 2-grams appears just a few times in the total database, but that there are some 2-grams that occur with a very high frequency. This is also illustrated by the plot below, which shows how many 2-grams appear at least, respectively, 2, 10, 20, 30, 40 or 50 times in the respective documents.
+These statistics confirm that the vast majority of unique 2-grams appears just a few times in the total database, but that there are some 2-grams that occur with a very high frequency. This is also illustrated by the plot below, which shows how many 2-grams appear at least, respectively, 1, 10, 20, 30, 40 or 50 times in the respective documents.
 
 
 ```{r, echo=FALSE}
-qplot(MinOccur, data= GlobFreqTable2Gr2, geom = "bar", fill = time, weight = Share, position = "dodge", binwidth = 5) + xlab("Minimal occurence of 2-gram") + ylab("Count in corpus")
+qplot(MinOccur, data= GlobFreqTable2Gr2, geom = "bar", fill = time, weight = Share, position = "dodge", binwidth = 5) + xlab("Minimal occurence of 2-gram in dataset") + ylab("Share in total number of unique 2-grams")
 ```
 
 Ad we did above for individual words, we also represent the  "frequency count table" for 2-grams: 
@@ -359,11 +361,11 @@ Counttablenews2Gr <- CreateCountTable(freq_tables2Gr, "news")
 ```{r, echo=FALSE, cache=2}
 head_table2Gr <- cbind(head(CounttableTwit2Gr),head(Counttableblogs2Gr))
 head_table2Gr <- cbind(head_table2Gr,head(Counttablenews2Gr))
-knitr::kable(head_table2Gr, caption = "Low frequency 2-grams")
+
 
 tail_table2gr <- cbind(tail(CounttableTwit2Gr),tail(Counttableblogs2Gr))
 tail_table2gr <- cbind(tail_table2gr,tail(Counttablenews2Gr))
-knitr::kable(tail_table2gr, caption = "High frequency 2-grams")
+
 
 
 
@@ -371,7 +373,14 @@ knitr::kable(tail_table2gr, caption = "High frequency 2-grams")
 most_freq_2gr <- sapply(corpusnames, function(x)   freq_tables2Gr[[x]][ as.numeric(freq_tables2Gr[[x]]$freq) %in% tail_table2gr[, paste("# of counts in", x) ] , "n-gram" ])
 
 
+head_table2Gr <- head_table2Gr[  , c(1,3,5,6)]
+names(head_table2Gr) <- c("# of 2-grams in twitter", "# of 2-grams in blogs", "# of 2-grams in news", "# of counts")
+knitr::kable(head_table2Gr, caption = "Low frequency 2-grams")
 
+tail_table2gr <- tail_table2gr[  , c(1,2,4,6)]
+row.names(tail_table2gr) <- NULL
+names(tail_table2gr) <- c("# of counts", "# of 2-grams in twitter", "# of 2-grams in blogs", "# of 2-grams in news")
+knitr::kable(tail_table2gr, caption = "High frequency 2-grams")
 # freq_count_ngr  <- ngramunique$freq
 # FreqPow2Gr <- displ$new(freq_count_ngr)
 # #FreqPow2Gr$getXmin()
@@ -390,7 +399,7 @@ most_freq_2gr <- sapply(corpusnames, function(x)   freq_tables2Gr[[x]][ as.numer
 # most_freq_2gr 
 ```
 
-Thus, for instance, `r sprintf("%1.0f",head_table2Gr[1, 1]/1000)` thousand individual 2-grams appear exactly `r head_table[1, 2]` time in the Twitter database, while `r tail_table2gr[nrow(tail_table2gr), 1]` individual 2-grams  appears exactly `r tail_table2gr[nrow(tail_table2gr), 2]` times in the Twitter database.
+Thus, for instance, `r sprintf("%1.0f",head_table2Gr[1, 1]/1000)` thousand individual 2-grams appear exactly `r head_table2Gr[1, 4]` time in the Twitter database, while `r tail_table2gr[nrow(tail_table2gr), 1]` individual 2-grams  appears exactly `r tail_table2gr[nrow(tail_table2gr), 2]` times in the Twitter database.
 
 For the three databases the 6 most frequent 2-grams are:
 
@@ -406,13 +415,14 @@ Finally, we can have a look at a sample of 2-grams that appear very infrequently
 set.seed(123)
 feww2grams <- lapply(corpusnames, VeryInfWords, tables = freq_tables2Gr)
 feww2gramstable <- do.call("cbind",feww2grams)
+row.names(feww2gramstable) <- NULL
 knitr::kable(feww2gramstable, caption= "Sample of infrequent 2-grams in the three databases")
 ```
 
 We see that there are still a lot of these 2-grams that make little sense in English, but compared to individual words, there are also some "low frequency" 2-grams that do make sense.
 
 
-In the plot below, we have set out the logs of the variables in the "frequency count table". This confirms that, for 2-grams that appear very frequently, the observations deviate substantially from the predictions of a power law. 
+In the plot below, we have set out the logs of the variables in the "frequency count table". This confirms that, for 2-grams that appear very frequently, the observations deviate substantially from the predictions of a power law, and  that we cannot thus maintain the hypothesis of a power law - a rigoruous hypothesis test falls outside the scope of this paper. 
 
 
 
