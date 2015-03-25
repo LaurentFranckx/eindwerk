@@ -2,10 +2,11 @@
 title: "Milestone report"
 author: "Me"
 date: "Thursday, March 19, 2015"
-output: html_document
+output: word_document
 ---
+#Main text
 
-#Introduction
+##Introduction
 
 This paper presents intermediate results in the construction of a predictive text model. The final objective
 of this project is to construct a Shiny app which provides users with suggestions for autocompleting a sentence they have started. 
@@ -21,7 +22,7 @@ Finally, we will describe the next steps we intend to undertake in order to cons
 
 
 
-#Descriptive statistics for the unique words
+##Descriptive statistics for the unique words
 
 Before undertaking any concrete modelling steps, it is important to understand the main features of the data. As we shall see below, our understanding of the data will allow us to drastically save on computer resources without jeopardizing predictive accuracy.
 
@@ -124,12 +125,8 @@ rm(or_tables)
 #gc()
 ```
 
-These statistics confirm that the vast majority of unique words appears just a few times in the total database, but that there are some words that occur with a very high frequency. This is also illustrated by the plot below, which shows how the share of individual words in the set of unique words changes when we require that they appear at least, respectively, 1, 10, 20, 30, 40 or 50 times in the respective complete dataset. We see a sharp initial decrease. For instance, in all three datasets, the share of words occuring at least ten times is between (approxilately) 15 and 25% of all unique words. 
+These statistics confirm that the vast majority of unique words appears just a few times in the total database, but that there are some words that occur with a very high frequency. This is also illustrated by the plot in appendix, which shows how the share of individual words in the set of unique words changes when we require that they appear at least, respectively, 1, 10, 20, 30, 40 or 50 times in the respective complete dataset. We see a sharp initial decrease. For instance, in all three datasets, the share of words occuring at least ten times is between (approxilately) 15 and 25% of all unique words. 
 
-
-```{r, echo=FALSE}
-qplot(MinOccur, data= GlobFreqTable2, geom = "bar", fill = time, weight = Share, position = "dodge", binwidth = 5) + xlab("Minimal occurence of word in dataset") + ylab("Share in total number of unique words")
-```
 
 
 Still another way to look at the data is to calculate how many individual words appear in the database with a given count. For instance: how many *unique* words appear exactly 1, 2, 3 etc times? We represent here the first five and the last five lines of the table containing this information (henceforth the "frequency count table"). 
@@ -165,11 +162,11 @@ Counttablenews <- CreateCountTable(freq_tables, "news")
 ```
 
 ```{r, echo=FALSE, cache=2}
-head_table <- cbind(head(CounttableTwit),head(Counttableblogs))
-head_table <- cbind(head_table,head(Counttablenews))
+head_table <- cbind(head(CounttableTwit,3),head(Counttableblogs,3))
+head_table <- cbind(head_table,head(Counttablenews,3))
 
-tail_table <- cbind(tail(CounttableTwit),tail(Counttableblogs))
-tail_table <- cbind(tail_table,tail(Counttablenews))
+tail_table <- cbind(tail(CounttableTwit,3),tail(Counttableblogs,3))
+tail_table <- cbind(tail_table,tail(Counttablenews,3))
 
 
 #most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq == max(freq_tables[[x]]$freq) , "word" ])
@@ -202,7 +199,7 @@ Finally, we can have a look at a random sample of words that appear very infrequ
 ```{r, echo=FALSE, cache=2}
 set.seed(123)
 
-VeryInfWords <- function( corpus, tables, lessthan = 5, samplesize = 10){
+VeryInfWords <- function( corpus, tables, lessthan = 5, samplesize = 5){
   freqtable <- tables[[corpus]]
   low_frq <- freqtable[ freqtable$freq < lessthan , ]
   low_frq <- low_frq[sample(1:nrow(low_frq), samplesize)  , ]
@@ -230,22 +227,15 @@ It has been suggested in the literature that the counts of individuals words in 
 
 
 However, a formal hypothesis has rejected this possibility for the databases we use here (details are available on request). 
-In the plot below, we have set out the logs of the variables in the "frequency count table". This confirms that, for words that appear very frequently, the observations deviate substantially from the predictions of a power law. 
+In the plot in the appendix, we have set out the logs of the variables in the "frequency count table". This confirms that, for words that appear very frequently, the observations deviate substantially from the predictions of a power law. 
 
 
-
-```{r, echo=FALSE, cache=2}
-qplot(log(CounttableTwit[,1]),log(CounttableTwit[,2])   , data= CounttableTwit)  
-qplot(log(Counttableblogs[,1]),log(Counttableblogs[,2])   , data= Counttableblogs)
-qplot(log(Counttablenews[,1]),log(Counttablenews[,2])   , data= Counttablenews)
-
-```
 
 
 Nevertheless, we can conclude that leaving out words that do not occur with a minimal frequency in each dataset, is unlikely to affect the predictive performance of the model. We will discuss below how we have determined this "minimal" frequency.
 
 
-#Descriptive statistics for 2-grams
+##Descriptive statistics for 2-grams
 
 The next question we need to consider is the distribution of n-grams, i.e.  contiguous sequences of n items in the database. As we shall discuss below, they will be the cornerstone of the predictive model. 
 
@@ -335,12 +325,8 @@ knitr::kable(    sapply(freq_tables2Gr, function(x) summary(x[, "freq"])), capti
 ```
 
 
-These statistics confirm that the vast majority of unique 2-grams appears just a few times in the total database, but that there are some 2-grams that occur with a very high frequency. This is also illustrated by the plot below, which shows how many 2-grams appear at least, respectively, 1, 10, 20, 30, 40 or 50 times in the respective documents.
+These statistics confirm that the vast majority of unique 2-grams appears just a few times in the total database, but that there are some 2-grams that occur with a very high frequency. This is also illustrated by the plot in the appendix, which shows how many 2-grams appear at least, respectively, 1, 10, 20, 30, 40 or 50 times in the respective documents.
 
-
-```{r, echo=FALSE}
-qplot(MinOccur, data= GlobFreqTable2Gr2, geom = "bar", fill = time, weight = Share, position = "dodge", binwidth = 5) + xlab("Minimal occurence of 2-gram in dataset") + ylab("Share in total number of unique 2-grams")
-```
 
 Ad we did above for individual words, we also represent the  "frequency count table" for 2-grams: 
 
@@ -359,12 +345,12 @@ Counttablenews2Gr <- CreateCountTable(freq_tables2Gr, "news")
 ``` 
 
 ```{r, echo=FALSE, cache=2}
-head_table2Gr <- cbind(head(CounttableTwit2Gr),head(Counttableblogs2Gr))
-head_table2Gr <- cbind(head_table2Gr,head(Counttablenews2Gr))
+head_table2Gr <- cbind(head(CounttableTwit2Gr,3),head(Counttableblogs2Gr,3))
+head_table2Gr <- cbind(head_table2Gr,head(Counttablenews2Gr,3))
 
 
-tail_table2gr <- cbind(tail(CounttableTwit2Gr),tail(Counttableblogs2Gr))
-tail_table2gr <- cbind(tail_table2gr,tail(Counttablenews2Gr))
+tail_table2gr <- cbind(tail(CounttableTwit2Gr,3),tail(Counttableblogs2Gr,3))
+tail_table2gr <- cbind(tail_table2gr,tail(Counttablenews2Gr,3))
 
 
 
@@ -422,18 +408,11 @@ knitr::kable(feww2gramstable, caption= "Sample of infrequent 2-grams in the thre
 We see that there are still a lot of these 2-grams that make little sense in English, but compared to individual words, there are also some "low frequency" 2-grams that do make sense.
 
 
-In the plot below, we have set out the logs of the variables in the "frequency count table". This confirms that, for 2-grams that appear very frequently, the observations deviate substantially from the predictions of a power law, and  that we cannot thus maintain the hypothesis of a power law - a rigoruous hypothesis test falls outside the scope of this paper. 
+In the plot in the appendix, we have set out the logs of the variables in the "frequency count table". This confirms that, for 2-grams that appear very frequently, the observations deviate substantially from the predictions of a power law, and  that we cannot thus maintain the hypothesis of a power law - a rigoruous hypothesis test falls outside the scope of this paper. 
 
 
 
-```{r, echo=FALSE, cache=2}
-qplot(log(CounttableTwit2Gr[,1]),log(CounttableTwit2Gr[,2])   , data= CounttableTwit2Gr)  
-qplot(log(Counttableblogs2Gr[,1]),log(Counttableblogs2Gr[,2])   , data= Counttableblogs2Gr)
-qplot(log(Counttablenews2Gr[,1]),log(Counttablenews2Gr[,2])   , data= Counttablenews2Gr)
-rm()
-```
-
-#Data cleaning
+##Data cleaning
 
 As the next step in our project, we have cleaned the original data: 
 
@@ -457,6 +436,64 @@ As stated above, because of the general skewness of the distribution of the n-gr
 
 For any given sentence, the prediction algorithm will then first predict the three most likely "next" words, first using the last three words of the sentence, then (if no results are obtained from the previous step) from the last two words, etc. 
 
-#Next steps
+##Next steps
 
 With the work performed until now, two major steps remain to be done. First, test the actual performance of the model with alternative datasets. Second, to develop the "Shiny" app. It is possible that, due to the technical limitations of Shiny, our model will need to be "culled" in order to be implementable on-line.  
+
+#Appendix
+
+##Share of unique words/2-grams as function of minimal occurence 
+
+```{r, echo=FALSE}
+aa <- qplot(MinOccur, data= GlobFreqTable2, geom = "bar", fill = time, weight = Share, position = "dodge", binwidth = 5) + xlab("Minimal occurence of word in dataset") + ylab("Share in total number of unique words")
+
+ab <- qplot(MinOccur, data= GlobFreqTable2Gr2, geom = "bar", fill = time, weight = Share, position = "dodge", binwidth = 5) + xlab("Minimal occurence of 2-gram in dataset") + ylab("Share in total number of unique 2-grams")
+
+library(grid)
+grid.newpage()
+pushViewport(viewport(layout = grid.layout(1, 2)))
+vplayout <- function(x, y)
+viewport(layout.pos.row = x, layout.pos.col = y)
+print(aa, vp = vplayout(1, 1))
+print(ab, vp = vplayout(1, 2))
+
+```
+
+
+##The frequency count tables for the individual words and 2-grams
+
+
+```{r, echo=FALSE, cache=2}
+a <- qplot(log10(CounttableTwit[,2]),log10(CounttableTwit[,1])   , data= CounttableTwit) +xlab("log(Number of words)") + ylab("log(Counts in Twitter)") 
+b <- qplot(log10(Counttableblogs[,2]),log10(Counttableblogs[,1])   , data= Counttableblogs) +xlab("log(Number of words)") + ylab("log(Counts in blogs)") 
+c <- qplot(log10(Counttablenews[,2]),log10(Counttablenews[,1])   , data= Counttablenews) +xlab("log(Number of words)") + ylab("log(Counts in news)") 
+library(grid)
+grid.newpage()
+pushViewport(viewport(layout = grid.layout(2, 2)))
+vplayout <- function(x, y)
+viewport(layout.pos.row = x, layout.pos.col = y)
+print(a, vp = vplayout(1, 1))
+print(b, vp = vplayout(1, 2))
+print(c, vp = vplayout(2, 1))
+
+```
+
+
+
+
+```{r, echo=FALSE, cache=2}
+d <- qplot(log10(CounttableTwit2Gr[,2]),log10(CounttableTwit2Gr[,1])   , data= CounttableTwit2Gr) +xlab("log(Number of 2-gr)") + ylab("log(Counts in Twitter)")   
+e <- qplot(log10(Counttableblogs2Gr[,2]),log10(Counttableblogs2Gr[,1])   , data= Counttableblogs2Gr) +xlab("log(Number of 2-gr)") + ylab("log(Counts in blogs)") 
+f <- qplot(log10(Counttablenews2Gr[,2]),log10(Counttablenews2Gr[,1])   , data= Counttablenews2Gr) +xlab("log(Number of 2-gr)") + ylab("log(Counts in news)") 
+library(grid)
+grid.newpage()
+pushViewport(viewport(layout = grid.layout(2, 2)))
+vplayout <- function(x, y)
+viewport(layout.pos.row = x, layout.pos.col = y)
+print(d, vp = vplayout(1, 1))
+print(e, vp = vplayout(1, 2))
+print(f, vp = vplayout(2, 1))
+
+```
+
+
