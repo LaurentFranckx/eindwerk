@@ -28,7 +28,7 @@ Before undertaking any concrete modelling steps, it is important to understand t
 On prior grounds, one would expect the three databases to differ on some important points. For instance, Twitter can be expected to contain relatively more abbreviations, relatively few stopwords, and more non-alphanumerical symbols than the other databases. We would also expect Twitter to contain less grammatically correct sentences. The differences between the "blogs" and the "news" database are probably less pronounced, but one would expect the "news" database to use a more formal vocabulary, and to contain less spelling and grammatical mistakes. Therefore, we will analyse the key statistics separately.  
 
 
-```{r, echo=FALSE, cache=2}
+```{r, echo=FALSE, cache=2, message=FALSE, warning=FALSE}
 library("poweRlaw")
 library("plyr")
 library("ggplot2")
@@ -118,7 +118,7 @@ We see thus that the vast majority of word occurences originates from a small di
 
 The general skewness of the frequency of words is confirmed when we look at the summary statistics of the number of counts:  
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning =FALSE, message=FALSE}
 knitr::kable(    sapply(freq_tables, function(x) summary(x[, "freq"])), caption = "Summary statistics for word counts")
 rm(or_tables)
 gc()
@@ -145,11 +145,15 @@ CreateCountTable <- function(tablelist, corpus){
   FreqPow <- displ$new(freq_count)
 #FreqPow$getXmin()
 #USBlogFreqPowPars <- estimate_pars(USBlogFreqPow, pars = NULL)
-  FreqPowMin <- estimate_xmin(FreqPow, pars = NULL)
-  FreqPow$setXmin(FreqPowMin)
+
+  #test: how does this impact on model performance
+#   FreqPowMin <- estimate_xmin(FreqPow, pars = NULL)
+#   FreqPow$setXmin(FreqPowMin)
+
+
   FrqvsVal <- cbind(FreqPow$internal$freq,FreqPow$internal$values)
   FrqvsVal <- as.data.frame(FrqvsVal)
-  names(FrqvsVal ) <- c(paste("# of individuals words", corpus), paste("# of counts in", corpus))
+  names(FrqvsVal ) <- c(paste("# of words/n-grams", corpus), paste("# of counts in", corpus))
   return(FrqvsVal) 
 }
 
@@ -163,21 +167,21 @@ Counttablenews <- CreateCountTable(freq_tables, "news")
 ```{r, echo=FALSE, cache=2}
 head_table <- cbind(head(CounttableTwit),head(Counttableblogs))
 head_table <- cbind(head_table,head(Counttablenews))
-head_table
+knitr::kable(head_table, caption = "Low frequency words")
 
 tail_table <- cbind(tail(CounttableTwit),tail(Counttableblogs))
 tail_table <- cbind(tail_table,tail(Counttablenews))
-tail_table
+knitr::kable(tail_table, caption = "High frequency words")
 
 
 
 #most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq == max(freq_tables[[x]]$freq) , "word" ])
-most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq %in% tail_table[, paste(paste("# of counts in", x)) ] , "word" ])
+most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq %in% tail_table[, paste("# of counts in", x) ] , "word" ])
 
 
 ```
 
-Thus, for instance, `r sprintf("%1.0f",head_table[1, 1]/1000)` thousand individual words appear exactly `r head_table[1, 2]` time in the Twitter database, while `r head_table[nrow(head_table), 1]` word  appears exactly `r head_table[nrow(head_table), 2]` times in the Twitter database.
+Thus, for instance, `r sprintf("%1.0f",head_table[1, 1]/1000)` thousand individual words appear exactly `r head_table[1, 2]` time in the Twitter database, while `r tail_table[nrow(tail_table), 1]` word  appears exactly `r tail_table[nrow(tail_table), 2]` times in the Twitter database.
 
 For each of the three data files, the 6 most frequent words are:
 
@@ -192,14 +196,15 @@ set.seed(123)
 
 VeryInfWords <- function( corpus, tables, lessthan = 5, samplesize = 10){
   freqtable <- tables[[corpus]]
-  low_frq <- TestFreqTable[ TestFreqTable$freq < lessthan , ]
+  low_frq <- freqtable[ freqtable$freq < lessthan , ]
   low_frq <- low_frq[sample(1:nrow(low_frq), samplesize)  , ]
   names(low_frq) <- c(paste("freq in", corpus), paste("word from", corpus))
   return(low_frq)
 }
 
 fewwords <- lapply(corpusnames, VeryInfWords, tables = freq_tables)
-do.call("cbind",fewwords)
+wordsample <- do.call("cbind",fewwords)
+knitr::kable(wordsample, caption ="Random  sample of low frequency words")
 
 # head(TestFreqTable[ TestFreqTable$freq == min(TestFreqTable$freq) , ], 3)
 # 
@@ -216,16 +221,15 @@ It has been suggested in the literature that the counts of individuals words in 
 
 
 However, a formal hypothesis has rejected this possibility for the databases we use here (details are available on request). 
-In the plot below, we have set out the logs of the variables in the "frequency count table". The straight line correspond to the best possible fit of a power law. This confirms that, for words that appear very frequently, the observations deviate substantially from the predictions of a power law. 
+In the plot below, we have set out the logs of the variables in the "frequency count table". This confirms that, for words that appear very frequently, the observations deviate substantially from the predictions of a power law. 
 
 
 
 ```{r, echo=FALSE, cache=2}
-# plot(FreqPow)
-# lines(FreqPow)
-# boot_res <- bootstrap_p(FreqPow, xmins = FreqPow$getXmin())
+qplot(log(CounttableTwit[,1]),log(CounttableTwit[,2])   , data= CounttableTwit)  
+qplot(log(Counttableblogs[,1]),log(Counttableblogs[,2])   , data= Counttableblogs)
+qplot(log(Counttablenews[,1]),log(Counttablenews[,2])   , data= Counttablenews)
 
-rm()
 ```
 
 
@@ -244,7 +248,7 @@ As in the analysis of individual words, we have performed a separate analysis fo
 
 
 
-```{r, echo=FALSE, cache=2}
+```{r, echo=FALSE, cache=2, message=FALSE}
 #ngramunique <- read.table("US.twitterTokened2Gr_uniq.txt", stringsAsFactors = FALSE)
 #ngramunique <- readLines("US.twitterTokened4Gr_uniq.txt")
 or_tables2Gr <- list()
@@ -318,8 +322,7 @@ The general skewness of the frequency of 2-grams is confirmed when we look at th
 ```{r, echo=FALSE}
 
 knitr::kable(    sapply(freq_tables2Gr, function(x) summary(x[, "freq"])), caption = "Summary statistics for 2-grams")
-rm(or_tables)
-gc()
+
 ```
 
 
@@ -349,16 +352,17 @@ Counttablenews2Gr <- CreateCountTable(freq_tables2Gr, "news")
 ```{r, echo=FALSE, cache=2}
 head_table2Gr <- cbind(head(CounttableTwit2Gr),head(Counttableblogs2Gr))
 head_table2Gr <- cbind(head_table2Gr,head(Counttablenews2Gr))
-head_table2Gr
+knitr::kable(head_table2Gr, caption = "Low frequency 2-grams")
 
 tail_table2gr <- cbind(tail(CounttableTwit2Gr),tail(Counttableblogs2Gr))
 tail_table2gr <- cbind(tail_table2gr,tail(Counttablenews2Gr))
-tail_table2gr
+knitr::kable(tail_table2gr, caption = "High frequency 2-grams")
 
 
 
 #most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq == max(freq_tables[[x]]$freq) , "word" ])
-most_freq_2gr <- sapply(corpusnames, function(x)   freq_tables2Gr[[x]][ freq_tables2Gr[[x]]$freq %in% tail_table2gr[, paste(paste("# of counts in", x)) ] , "word" ])
+most_freq_2gr <- sapply(corpusnames, function(x)   freq_tables2Gr[[x]][ as.numeric(freq_tables2Gr[[x]]$freq) %in% tail_table2gr[, paste("# of counts in", x) ] , "n-gram" ])
+
 
 
 # freq_count_ngr  <- ngramunique$freq
@@ -379,7 +383,7 @@ most_freq_2gr <- sapply(corpusnames, function(x)   freq_tables2Gr[[x]][ freq_tab
 # most_freq_2gr 
 ```
 
-Thus, for instance, `r sprintf("%1.0f",head_table2Gr[1, 1]/1000)` thousand individual 2-grams appear exactly `r head_table[1, 2]` time in the Twitter database, while `r head_table2Gr[nrow(head_table2Gr), 1]` individual 2-grams  appears exactly `r head_table2Gr[nrow(head_table2Gr), 2]` times in the Twitter database.
+Thus, for instance, `r sprintf("%1.0f",head_table2Gr[1, 1]/1000)` thousand individual 2-grams appear exactly `r head_table[1, 2]` time in the Twitter database, while `r tail_table2gr[nrow(tail_table2gr), 1]` individual 2-grams  appears exactly `r tail_table2gr[nrow(tail_table2gr), 2]` times in the Twitter database.
 
 For the three databases the 6 most frequent 2-grams are:
 
@@ -393,21 +397,22 @@ Finally, we can have a look at a sample of 2-grams that appear very infrequently
 
 ```{r, echo=FALSE, cache=2}
 set.seed(123)
-fewwords <- lapply(corpusnames, VeryInfWords, tables = freq_tables2Gr)
-do.call("cbind",fewwords)
-
+feww2grams <- lapply(corpusnames, VeryInfWords, tables = freq_tables2Gr)
+feww2gramstable <- do.call("cbind",feww2grams)
+knitr::kable(feww2gramstable, caption= "Sample of infrequent 2-grams in the three databases")
 ```
 
 We see that there are still a lot of these 2-grams that make little sense in English, but compared to individual words, there are also some "low frequency" 2-grams that do make sense.
 
 
-Finally, we consider the possibility that the 2-grams may follow a power law. 
+In the plot below, we have set out the logs of the variables in the "frequency count table". This confirms that, for 2-grams that appear very frequently, the observations deviate substantially from the predictions of a power law. 
+
 
 
 ```{r, echo=FALSE, cache=2}
-# plot(FreqPow2Gr)
-# lines(FreqPow2Gr)
-# boot_res <- bootstrap_p(FreqPow2Gr, xmins = FreqPow2Gr$getXmin())
+qplot(log(CounttableTwit2Gr[,1]),log(CounttableTwit2Gr[,2])   , data= CounttableTwit2Gr)  
+qplot(log(Counttableblogs2Gr[,1]),log(Counttableblogs2Gr[,2])   , data= Counttableblogs2Gr)
+qplot(log(Counttablenews2Gr[,1]),log(Counttablenews2Gr[,2])   , data= Counttablenews2Gr)
 rm()
 ```
 
@@ -438,12 +443,3 @@ For any given sentence, the prediction algorithm will then first predict the thr
 #Next steps
 
 With the work performed until now, two major steps remain to be done. First, test the actual performance of the model with alternative datasets. Second, to develop the "Shiny" app. It is possible that, due to the technical limitations of Shiny, our model will need to be "culled" in order to be implementable on-line.  
-
-
-
-
-
-
-
-
-
