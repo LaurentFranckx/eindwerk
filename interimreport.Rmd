@@ -12,7 +12,7 @@ of this project is to construct a Shiny app which provides users with suggestion
 
 The training data set has been obtained from the Coursera website, but are originally  from a corpus called HC Corpora (www.corpora.heliohost.org). The complete set consists of databases in English, German, Russian and Finnish. In this project we will limit ourselves to the English database. 
 
-The English database itself is composed of three files, each composed of several hundreds of thousands of text lines from blogs, news cites and Twitter. 
+The English database itself is composed of three files, each composed of data sets containing several hundreds of thousands of text lines from blogs, news sites and Twitter. 
 
 As a first step, we will summarize the main descriptive statistics for each dataset, and explore how these compare to each other - these statistics will be provided for individual words and for 2-grams (for a definition, see further). 
 As a next step, we will  explain the approach used to the cleaning  and the organisation of the data.
@@ -25,7 +25,7 @@ Finally, we will describe the next steps we intend to undertake in order to cons
 
 Before undertaking any concrete modelling steps, it is important to understand the main features of the data. As we shall see below, our understanding of the data will allow us to drastically save on computer resources without jeopardizing predictive accuracy.
 
-On prior grounds, one would expect the three databases to differ on some important points. For instance, Twitter can be expected to contain relatively more abbreviations, relatively few stopwords, and more non-alphanumerical symbols than the other databases. We would also expect Twitter to contain less grammatically correct sentences. The differences between the "blogs" and the "news" database are probably less pronounced, but one would expect the "news" database to use a more formal vocabulary, and to contain less spelling and grammatical mistakes. Therefore, we will analyse the key statistics separately.  
+On prior grounds, one would expect the three datasets to differ on some important points. For instance, Twitter can be expected to contain relatively more abbreviations, relatively few stopwords, and more non-alphanumerical symbols than the other datasets. We would also expect Twitter to contain less grammatically correct sentences. The differences between the "blogs" and the "news" datasets are probably less pronounced, but one would expect the "news" dataset to use a more formal vocabulary, and to contain less spelling and grammatical mistakes. Therefore, we will analyse the key statistics separately.  
 
 
 ```{r, echo=FALSE, cache=2, message=FALSE, warning=FALSE}
@@ -55,7 +55,7 @@ for(name in corpusnames){
   or_tables[[name]] <- readLines(file.path(folder_txt, paste("en_US", name, "txt", sep =".")))
   TestFreqTable <- read.table(paste("US.", name , "unique.txt", sep=""), stringsAsFactors = FALSE)
   names(TestFreqTable) <- c("freq", "word")
-  min_fretable <- rbind(c(2, nrow(TestFreqTable[TestFreqTable$freq > 1, ])), c(10,nrow( TestFreqTable[TestFreqTable$freq > 9, ])))
+  min_fretable <- rbind(c(1, nrow(TestFreqTable[TestFreqTable$freq > 0, ])), c(10,nrow( TestFreqTable[TestFreqTable$freq > 9, ])))
   #min_fretable <- rbind(min_fretable, c(10, nrow(TestFreqTable[TestFreqTable$freq > 9, ])))
   min_fretable <- rbind(min_fretable, c(20, nrow(TestFreqTable[TestFreqTable$freq > 19, ])))
   min_fretable <- rbind(min_fretable, c(30, nrow(TestFreqTable[TestFreqTable$freq > 29,])))
@@ -114,25 +114,25 @@ The table above gives some key information on "blogs", "Twitter"" and "news" dat
 - the third column gives, for the databases restricted to alphanumeric characters, the number of *unique* words
 - the fourth column gives (in %), the number of *unique* words corresponding to 90% of *all* word occurences. 
 
-We see thus that the vast majority of word occurences originates from a small dictionary. 
+We notice that while the Twitter dataset contains approximately three times the number of lines of text as the other datasets, it contains less words, which is of course due to the restrictions imposed on the length of individual tweets. On the other hand, the Twitter dataset contains more *unique* words, reflecting probably idiosyncratic expressions and abbreviations used by the "tweeters". 
 
-The general skewness of the frequency of words is confirmed when we look at the summary statistics of the number of counts:  
+We also observe that, in all three datasets, the vast majority of word occurences originates from a small (data set specific) dictionary. The general skewness of the frequency of words is confirmed when we look at the summary statistics of the number of counts:  
 
 ```{r, echo=FALSE, warning =FALSE, message=FALSE}
 knitr::kable(    sapply(freq_tables, function(x) summary(x[, "freq"])), caption = "Summary statistics for word counts")
 rm(or_tables)
-gc()
+#gc()
 ```
 
-These statistics confirm that the vast majority of unique words appears just a few times in the total database, but that there are some words that occur with a very high frequency. This is also illustrated by the plot below, which shows how many words appear at least, respectively, 2, 10, 20, 30, 40 or 50 times in the respective documents.
+These statistics confirm that the vast majority of unique words appears just a few times in the total database, but that there are some words that occur with a very high frequency. This is also illustrated by the plot below, which shows how the share of individual words in the set of unique words changes when we require that they appear at least, respectively, 1, 10, 20, 30, 40 or 50 times in the respective complete dataset. We see a sharp initial decrease. For instance, in all three datasets, the share of words occuring at least ten times is between (approxilately) 15 and 25%. 
 
 
 ```{r, echo=FALSE}
-qplot(MinOccur, data= GlobFreqTable2, geom = "bar", fill = time, weight = Share, position = "dodge", binwidth = 5) + xlab("Minimal occurence of word") + ylab("Count in corpus")
+qplot(MinOccur, data= GlobFreqTable2, geom = "bar", fill = time, weight = Share, position = "dodge", binwidth = 5) + xlab("Minimal occurence of word in dataset") + ylab("Share in total number of unique words")
 ```
 
 
-Still another way to look at the data is to calculate how many individual words appear in the database with a given count, thus for instance: how many *unique* words appear exactly 1, 2, 3 etc times? We represent here the first five and the last five lines of the table containing this information (henceforth the "frequency count table"). 
+Still another way to look at the data is to calculate how many individual words appear in the database with a given count. For instance: how many *unique* words appear exactly 1, 2, 3 etc times? We represent here the first five and the last five lines of the table containing this information (henceforth the "frequency count table"). 
 
 
 
@@ -167,27 +167,34 @@ Counttablenews <- CreateCountTable(freq_tables, "news")
 ```{r, echo=FALSE, cache=2}
 head_table <- cbind(head(CounttableTwit),head(Counttableblogs))
 head_table <- cbind(head_table,head(Counttablenews))
-knitr::kable(head_table, caption = "Low frequency words")
 
 tail_table <- cbind(tail(CounttableTwit),tail(Counttableblogs))
 tail_table <- cbind(tail_table,tail(Counttablenews))
-knitr::kable(tail_table, caption = "High frequency words")
-
 
 
 #most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq == max(freq_tables[[x]]$freq) , "word" ])
 most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq %in% tail_table[, paste("# of counts in", x) ] , "word" ])
 
+head_table <- head_table[ , c(1,3,5,6)]
+names(head_table) <- c("# of words in twitter", "# of words in twitter", "# of words in twitter", "# of counts")
+knitr::kable(head_table, caption = "Low frequency words")
+
+tail_table <- tail_table[ , c(1,2,4,6)]
+names(tail_table) <- c("# of counts", "# of words in twitter", "# of words in twitter", "# of words in twitter" )
+knitr::kable(tail_table, caption = "High frequency words")
 
 ```
 
-Thus, for instance, `r sprintf("%1.0f",head_table[1, 1]/1000)` thousand individual words appear exactly `r head_table[1, 2]` time in the Twitter database, while `r tail_table[nrow(tail_table), 1]` word  appears exactly `r tail_table[nrow(tail_table), 2]` times in the Twitter database.
+Thus, for instance, `r sprintf("%1.0f",head_table[1, 1]/1000)` thousand individual words appear exactly `r head_table[1, 4]` time in the Twitter database, while `r tail_table[nrow(tail_table), 1]` word  appears exactly `r tail_table[nrow(tail_table), 2]` times in the Twitter database.
 
 For each of the three data files, the 6 most frequent words are:
 
 ```{r, echo=FALSE, cache=2}
 knitr::kable(most_freq_words, caption= "Most frequent words in the three databases")
 ```
+
+None of these are surprising, though it should bo noted that the appearance of "you" and "i" in the Twitter top 6 and of "i" in the blogs top 6 are an indication of the more "personnal" contents of these datasets. 
+
 
 Finally, we can have a look at a random sample of words that appear very infrequently in the database (here, less than 5 times): 
 
