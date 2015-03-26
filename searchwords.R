@@ -1,3 +1,7 @@
+#to do: add correction factor 0.4 for score in stupid backoff, and final prob when no prediction in corpus
+# see "Interpolation" page on Stanfor NLP
+
+
 
 SearchStrCorpus <- function(searchstring, corpus){
   splitstring <- strsplit(searchstring, " ")[[1]]
