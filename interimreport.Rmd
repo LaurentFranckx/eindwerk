@@ -9,13 +9,11 @@ output: html_document
 ##Introduction
 
 This paper presents intermediate results in the construction of a predictive text model. The final objective
-of this project is to construct a Shiny app which provides users with suggestions for autocompleting a sentence they have started. 
+of this project is to construct a Shiny app which provides users with suggestions for auto completing a sentence they have started. 
 
-The training data set has been obtained from the Coursera website, but are originally  from a corpus called HC Corpora (www.corpora.heliohost.org). The complete set consists of databases in English, German, Russian and Finnish. In this project we will limit ourselves to the English database. 
+The training data set has been obtained from the Coursera website, but are originally  from a corpus called HC Corpora (www.corpora.heliohost.org). The complete set consists of databases in English, German, Russian and Finnish. In this project we will limit ourselves to the English database. The English database itself is composed of three files, each composed of data sets containing several hundreds of thousands of text lines from blogs, news sites and Twitter. 
 
-The English database itself is composed of three files, each composed of data sets containing several hundreds of thousands of text lines from blogs, news sites and Twitter. 
-
-As a first step, we will summarize the main descriptive statistics for each dataset, and explore how these compare to each other - these statistics will be provided for individual words and for 2-grams (for a definition, see further). 
+As a first step, we will summarize the main descriptive statistics for each dataset, and explore how these compare to each other - these statistics will be provided for individual words and for 2-grams (for a definition of this term, see further). 
 As a next step, we will  explain the approach used to the cleaning  and the organisation of the data.
 Finally, we will describe the next steps we intend to undertake in order to construct our predictive model. 
 
@@ -108,21 +106,19 @@ knitr::kable(SummarTableWords, caption = "Key summary statistics for unique word
 
 ```
 
-The table above gives some key information on "blogs", "Twitter"" and "news" databases
+The table above gives some key information on the "blogs", "Twitter"" and "news" datasets:
 
-- the first column gives, for the "uncleaned" version of the databases, the number of lines of text
-- the second column gives, for the databases restricted to alphanumeric characters, the total number of words
-- the third column gives, for the databases restricted to alphanumeric characters, the number of *unique* words
-- the fourth column gives (in %), the number of *unique* words corresponding to 90% of *all* word occurences. 
+- the first column gives, for the "uncleaned" version of the databases, the number of lines of text in millions;
+- the second column gives, for the databases restricted to alphanumeric characters, the total number of words in millions;
+- the third column gives, for the databases restricted to alphanumeric characters, the number of *unique* words in thousands;
+- the fourth column gives (in %), the number of *unique* words corresponding to 90% of *all* word occurrences. 
 
 We notice that while the Twitter dataset contains approximately three times more lines of text than the other datasets, it contains less words, which is due to the restrictions imposed on the length of individual tweets. On the other hand, the Twitter dataset contains more *unique* words, reflecting probably idiosyncratic expressions and abbreviations used by the "tweeters". 
 
-We also observe that, in all three datasets, the vast majority of word occurences originates from a small (data set specific) dictionary. The general skewness of the frequency of words is confirmed when we look at the summary statistics of the number of counts (see Appendix).  
-
-These statistics confirm that the vast majority of unique words appears just a few times in the total database, but that there are some words that occur with a very high frequency. This is also illustrated by the plot in Appendix, which shows how the share of individual words in the set of *unique* words changes when we require that they appear at least, respectively, 1, 10, 20, 30, 40 or 50 times in the respective complete dataset. We see a sharp initial decrease in this share. For instance, in all three datasets, the share of words occuring at least ten times is between (approxilately) 15 and 25% of all unique words. 
+We also observe that, in all three datasets, the vast majority of word occurrences originates from a very small (data set specific) dictionary. The general skewness of the frequency of words is confirmed when we look at the summary statistics of the  counts of *unique*  words (see Appendix): these statistics confirm that the vast majority of unique words appears just a few times in the total database, but that there are some words that occur with a very high frequency. This is also illustrated by the plot in Appendix, which shows how the share of individual words in the set of *unique* words changes when we require that they appear at least, respectively, 1, 10, 20, 30, 40 or 50 times in the respective complete dataset. We see a sharp initial decrease in this share. For instance, in all three datasets, the share of words occurring at least ten times is between (approximately) 15 and 25% of all unique words. 
 
 
-Still another way to look at the data is to calculate how many individual words appear in the database with a given count. For instance: how many *unique* words appear exactly 1, 2, 3 etc times? In Appendix, we represent  the first five and the last five lines of the table containing this information (henceforth the "frequency count tables"). 
+Still another way to look at the data is to ask: how many *unique* words appear exactly 1, 2, 3 etc times? In Appendix, we represent  the first five and the last five lines of the table containing this information (henceforth the "frequency count tables"). 
 
 
 
@@ -161,37 +157,40 @@ head_table <- cbind(head_table,head(Counttablenews))
 tail_table <- cbind(tail(CounttableTwit),tail(Counttableblogs))
 tail_table <- cbind(tail_table,tail(Counttablenews))
 
+twit_one <- nrow(CounttableTwit[CounttableTwit[, "# of words/n-grams twitter"] == 1, 0])
+twit_two <- nrow(CounttableTwit[CounttableTwit[ , "# of words/n-grams twitter"] == 2, 0])
+
 
 #most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq == max(freq_tables[[x]]$freq) , "word" ])
 most_freq_words <- sapply(corpusnames, function(x)   freq_tables[[x]][ freq_tables[[x]]$freq %in% tail_table[, paste("# of counts in", x) ] , "word" ])
 
 head_table <- head_table[ , c(1,3,5,6)]
-names(head_table) <- c("# of words in twitter", "# of words in blogs", "# of words in news", "# of counts")
+names(head_table) <- c("# of unique words in twitter", "# of unique words in blogs", "# of unique words in news", " counts")
 
 
 row.names(tail_table) <- NULL 
 tail_table <- tail_table[ , c(1,2,4,6)]
-names(tail_table) <- c("# of counts", "# of words in twitter", "# of words in blogs ", "# of words in news " )
+names(tail_table) <- c("# of unique words", "counts in twitter", "counts in blogs ", "counts in news " )
 
 
 ```
 
-Thus, for instance, `r sprintf("%1.0f",head_table[1, 1]/1000)` thousand individual words appear exactly `r head_table[1, 4]` time in the Twitter database, while `r tail_table[nrow(tail_table), 1]` word  appears exactly `r tail_table[nrow(tail_table), 2]` times in the Twitter database.
+These tables show that, for instance, `r sprintf("%1.0f",head_table[1, 1]/1000)` thousand individual words appear exactly `r head_table[1, 4]` time in the Twitter database, while `r tail_table[nrow(tail_table), 1]` word  appears exactly `r sprintf("%1.0f", tail_table[nrow(tail_table), 2])` times in the Twitter database.
 
 A  table in Appendix also gives the 6 most frequent words for each of the three datasets. 
-None of these are surprising, though it should be noted that the appearance of "you" and "i" in the Twitter top 6 and of "i" in the blogs top 6 are an indication of the more "personnal" contents of these datasets. 
+None of the results are surprising, though it should be noted that the appearance of "you" and "i" in the Twitter top 6 and of "i" in the blogs top 6 are an indication of the more "personal" contents of these datasets. 
 
 
 
 
-```{r, echo=FALSE, cache=2}
+```{r, echo=FALSE}
 set.seed(123)
 
 VeryInfWords <- function( corpus, tables, lessthan = 5, samplesize = 10){
   freqtable <- tables[[corpus]]
   low_frq <- freqtable[ freqtable$freq < lessthan , ]
   low_frq <- low_frq[sample(1:nrow(low_frq), samplesize)  , ]
-  names(low_frq) <- c(paste("freq in", corpus), paste("word from", corpus))
+  names(low_frq) <- c("count ",  corpus)
   return(low_frq)
 }
 
@@ -209,22 +208,16 @@ row.names(wordsample) <- NULL
 # head(TestFreqTable[ TestFreqTable$freq == 4 , ], 3)
 ```
 
-Finally, we can have a look at a random sample of words that appear very infrequently in the database (here, less than 5 times) - see the table in Appendix. These words are generally meaningless in English, or are obvious spelling mistakes.  
+Finally, we can have a look at a random sample of words that appear very infrequently in the database (here, less than 5 times) - see the table in Appendix for a sample of ten words. These words are generally meaningless in English, or are obvious spelling mistakes.  
 
-It has been suggested in the literature that the counts of individuals words in a corpus generally follows a power law, i.e. that the frequency of a word is inversely proportional to its frequency rank. Thus, the second most frequent word occurs half as often the most frequent word, the third most frequent word occurs one third as often as the most frequent word, etc - see http://en.wikipedia.org/wiki/Power_law. 
+It has been suggested in the literature that the counts of individuals words in a corpus generally follows a power law, i.e. that the frequency of a word is inversely proportional to its frequency rank. Thus, the second most frequent word occurs half as often the most frequent word, the third most frequent word occurs one third as often as the most frequent word, etc - see http://en.wikipedia.org/wiki/Power_law. However, a formal hypothesis has rejected this possibility for the databases we use here (details are available on request). This is confirmed by a visual analysis of the plots of the  "frequency count table" - see the Appendix for details. 
 
-However, a formal hypothesis has rejected this possibility for the databases we use here (details are available on request). In the plot in the Appendix, we have set out the logs of the variables in the "frequency count table". This confirms that, for unique words that appear very frequently, the observations deviate substantially from the predictions of a power law. 
-
-Nevertheless, we can conclude that leaving out words that do not occur with a minimal frequency in each dataset, is unlikely to affect the predictive performance of the model. We will discuss below how we have determined this "minimal" frequency.
+Nevertheless, from the overall analysis in this section, we can be confident that leaving out words that do not occur with a minimal frequency in each dataset is unlikely to affect the predictive performance of the model. We will discuss below how we have determined this "minimal" frequency.
 
 
 ##Descriptive statistics for 2-grams
 
-The next question we need to consider is the distribution of n-grams, i.e.  contiguous sequences of n items in the database. As we shall discuss below, they will be the cornerstone of the predictive model. 
-
-For the purposes of this project, we have constructed 2-grams, 3-grams and 4-grams. 
-
-As a full discussion of the properties of all n-grams would take us beyond the scope of this paper, we focus here on the analysis of 2-grams. A full analysis is available on request. 
+The next question we need to consider is the distribution of n-grams, i.e.  contiguous sequences of n items in the database. As we shall discuss below, they will be the cornerstone of the predictive model. For the purposes of this project, we have constructed 2-grams, 3-grams and 4-grams. As a full discussion of the properties of all n-grams would take us beyond the scope of this paper, we focus here on the analysis of 2-grams. A full analysis is available on request. 
 
 As in the analysis of individual words, we have performed a separate analysis for the "blogs", "Twitter"" and "news" datasets. 
 
@@ -295,18 +288,11 @@ The table above gives some key information on "blogs", "Twitter"" and "news" dat
 
 - the first column gives, for the databases restricted to alphanumeric characters, the total number of 2-grams
 - the second column gives, for the databases restricted to alphanumeric characters, the number of *unique* 2-grams
-- the third column gives (in %), the number of *unique* 2-grams corresponding to 90% of *all* 2-gram occurences. 
+- the third column gives (in %), the number of *unique* 2-grams corresponding to 90% of *all* 2-gram occurrences. 
 
-We see thus that the vast majority of 2-gram occurences originates from a small set of *unique* 2-grams. However, as we should have expected, the share of these *unique* 2-grams in the total dataset is much larger (a factor twenty) than for individual words.   
+We see thus that the vast majority of 2-gram occurrences originates from a small set of *unique* 2-grams. However, as we should have expected, the share of these *unique* 2-grams in the total dataset is much larger (a factor twenty) than for individual words.   
 
-The general skewness of the frequency of 2-grams is confirmed when we look at the summary statistics of the number of counts (see Appendix). 
-
-
-
-These statistics confirm that the vast majority of unique 2-grams appears just a few times in the total database, but that there are some 2-grams that occur with a very high frequency. This is also illustrated by the plot in the Appendix, which shows how many 2-grams appear at least, respectively, 1, 10, 20, 30, 40 or 50 times in the respective documents.
-
-
-Ad we did above for individual words, we also represent the  "frequency count table" for 2-grams: 
+The general skewness of the frequency of 2-grams is confirmed when we look at the summary statistics of the number of counts (see Appendix). These statistics confirm that the vast majority of unique 2-grams appears just a few times in the total database, but that there are some 2-grams that occur with a very high frequency. This is also illustrated by the plot in the Appendix, which shows how the share of 2-grams in the set of *unique* 2-grams changes when we require that they appear at least, respectively, 1, 10, 20, 30, 40 or 50 times in the respective documents. We see that the decrease is even faster than in the case of individuals words.
 
 
 
@@ -338,12 +324,12 @@ most_freq_2gr <- sapply(corpusnames, function(x)   freq_tables2Gr[[x]][ as.numer
 
 
 head_table2Gr <- head_table2Gr[  , c(1,3,5,6)]
-names(head_table2Gr) <- c("# of 2-grams in twitter", "# of 2-grams in blogs", "# of 2-grams in news", "# of counts")
+names(head_table2Gr) <- c("# of unique 2-grams in twitter", "# of unique 2-grams in blogs", "# of unique 2-grams in news", "Counts in each dataset")
 
 
 tail_table2gr <- tail_table2gr[  , c(1,2,4,6)]
 row.names(tail_table2gr) <- NULL
-names(tail_table2gr) <- c("# of counts", "# of 2-grams in twitter", "# of 2-grams in blogs", "# of 2-grams in news")
+names(tail_table2gr) <- c("# of unique 2-grams", "counts in twitter", "counts in blogs", "counts in news")
 
 # freq_count_ngr  <- ngramunique$freq
 # FreqPow2Gr <- displ$new(freq_count_ngr)
@@ -363,24 +349,24 @@ names(tail_table2gr) <- c("# of counts", "# of 2-grams in twitter", "# of 2-gram
 # most_freq_2gr 
 ```
 
-Thus, for instance, `r sprintf("%1.0f",head_table2Gr[1, 1]/1000)` thousand individual 2-grams appear exactly `r head_table2Gr[1, 4]` time in the Twitter database, while `r tail_table2gr[nrow(tail_table2gr), 1]` individual 2-grams  appears exactly `r tail_table2gr[nrow(tail_table2gr), 2]` times in the Twitter database.
+Ad we did above for individual words, we have also constructed the  "frequency count table" for 2-grams - see Appendix for the "head" and the "tail" of this table.  These tables show that, for instance, `r sprintf("%1.0f",head_table2Gr[1, 1]/1000)` thousand individual 2-grams appear exactly `r head_table2Gr[1, 4]` time in the Twitter database, while `r tail_table2gr[nrow(tail_table2gr), 1]` individual 2-gram  appears exactly `r sprintf("%1.0f", tail_table2gr[nrow(tail_table2gr), 2])` times in the Twitter database.
 
-A table in Appendix gives the most frequent 2-grams for each dataset.
-
-
+A table in Appendix gives the most frequent 2-grams for each dataset. As in the case of individual words there are no surprises. It is interesting to note that they all start with a preposition followed by an article. 
 
 
-```{r, echo=FALSE, cache=2}
+
+
+```{r, echo=FALSE}
 set.seed(123)
 feww2grams <- lapply(corpusnames, VeryInfWords, tables = freq_tables2Gr)
 feww2gramstable <- do.call("cbind",feww2grams)
 row.names(feww2gramstable) <- NULL
 ```
 
-Finally, we can have a look at a sample of 2-grams that appear very infrequently in each database (see Appendix). We see that there are still a lot of these 2-grams that make little sense in English, but compared to individual words, there are also some "low frequency" 2-grams that do make sense.
+Finally, we can have a look at a sample of 2-grams that appear very infrequently in each database (see Appendix). A lot of these 2-grams are meaningless in English, but compared to individual words, there are also some "low frequency" 2-grams that do make sense.
 
 
-In the plot in the Appendix, we have set out the logs of the variables in the "frequency count table". This confirms that, for 2-grams that appear very frequently, the observations deviate substantially from the predictions of a power law, and  that we cannot thus maintain the hypothesis of a power law - a rigoruous hypothesis test falls outside the scope of this paper. 
+In the plot in the Appendix, we have set out the logs of the variables in the "frequency count table". This confirms that, for 2-grams that appear very frequently, the observations deviate substantially from the predictions of a power law, and  that we cannot thus maintain the hypothesis of a power law - a rigorous hypothesis test falls outside the scope of this paper. 
 
 
 
@@ -389,24 +375,24 @@ In the plot in the Appendix, we have set out the logs of the variables in the "f
 As the next step in our project, we have cleaned the original data: 
 
 - First, we have modified the encoding from "UTF-8" to "latin1" - not doing so would lead to the creation of unreadable characters.
-- Second, we have removed any numbers present: these are highly context-dependent and unlikely to have a high predictive value (or, conversely, easy to predict)
-- Third we have removed all the words that are banned by Google for their profane or offensive character.
+- Second, we have removed any numbers present: these are highly context-dependent and unlikely to have a high predictive value (or, conversely, unlikely to be easy to predict).
+- Third, we have removed all the words that are banned by Google for their profane or offensive character.
 - Fourth, we have removed all white spaces that have resulted from the previous steps. 
 
-Howevern, punctuation and other non-alphanumeric characters are an integral part of the sentence (especially in the case of Twitter), and have therefore been kept as they were. Meaningless non-alphanumeric characters  are unlikely to appear frequently in the same sequences, and will thus be eliminated in the next stage.   
+However, punctuation and other non-alphanumeric characters are an integral part of the sentence (especially in the case of Twitter), and have therefore been kept as they were. Meaningless non-alphanumeric characters  are unlikely to appear frequently in the same sequences, and will thus be eliminated by restricting the sets to words and n-grams that appear with a minimal frequency. 
 
-Although foreign words have crept inside the database, we have left them as they were. Indeed, some foreign words are deliberately used in English to convey a specific message. If foreign sentences have been included inadvertently in the database, it is unlikely that similar sentences (or sentences "contaminating" English content) have appeared frequently, and they are likely to be eliminated in the next step of the analysis. 
+Although foreign words have crept inside the database, we have left them as they were. Indeed, some foreign words are deliberately used in English to convey a specific message. If foreign sentences have been included inadvertently in the database, it is unlikely that similar sentences (or sentences "contaminating" English content) have appeared frequently, and they are also likely to disappear once we eliminate low frequency words and n-grams. 
 
-Next, we have used the "cleaned" version of the database to create a list of words and their occurence. Moreover, we have constructed a list of all n-grams (for n = 4,3,2) and counted how often each individual n-gram occurs. 
-Thus, for instance, the sentence: "This is how to count two-grams" would be split in: "this is", "is how", "how to", "to count", "count two-grams", and then we would count how often the 2-gram "this is" occurs in the dataset.
+Next, we have used the "cleaned" version of the database (which differs thus from the "raw" version discussed above) to create a list of words and their occurrence. Moreover, we have constructed a list of all n-grams (for n = 4,3,2) and counted how often each individual n-gram occurs. 
+Thus, for instance, the sentence: "This is how to count two-grams" would be split in: "this is", "is how", "how to", "to count", "count two-grams", and then we would count how often each 2-gram "occurs in the dataset.
 
-For the purposes of the predictive model, we have used the Markov assumption, this is, we have assumed that the probability that a given word is the next word in a sentence only depends on the n preceding words, rather than on the complete sentence. 
+For the purposes of the predictive model, we have used the Markov assumption, this is, we have assumed that the probability that a given word is the next word in a sentence only depends on the *n* preceding words, rather than on the complete sentence. 
 
-For instance, we have used the 4-grams to predict the probability of a word occuring conditional on the three preceeding words in the sentence. In order to do so, we have split each 4-gram in two strings, one representing the first three words and one the final word (which needs to be predicted). Because we know the count for all 4-grams and all 3-grams, it is then straighforward to calculate the conditional probability that a given word will follow a given 3-gram.
+For instance, we have used the 4-grams to predict the probability of a word occurring, conditional on the three preceding words in the sentence. In order to do so, we have split each 4-gram in two strings, one representing the first three words and one the final word (which needs to be predicted). Because we know the count for all 4-grams and all 3-grams, it is  straightforward to calculate the conditional probability that a given word will follow a given 3-gram.
 
-As stated above, because of the general skewness of the distribution of the n-grams and in order to save computer resources, we have limited ourselves to the n-grams that appeared at least 3 times in each dataset. 
+As stated above, because of the general skewness of the distribution of the n-grams and in order to save computer resources, we have limited ourselves to the n-grams that appeared at least 3 times in each dataset. It remains to be tested how this choice affects the overall predictive power of our model.  
 
-For any given sentence, the prediction algorithm will then first predict the three most likely "next" words, first using the last three words of the sentence, then (if no results are obtained from the previous step) from the last two words, etc. 
+For any given sentence, the prediction algorithm will then first predict the three most likely "next" words, first using the last three words of the sentence, then (if no results are obtained from the previous step)  the last two words, etc. 
 
 ##Next steps
 
@@ -465,9 +451,9 @@ knitr::kable(tail_table2gr, caption = "High frequency 2-grams")
 
 ##Sample of low frequency words and 2-grams
 
-```{r, echo=FALSE, cache=2}
-knitr::kable(wordsample, caption ="Random  sample of low frequency words")
-knitr::kable(feww2gramstable, caption= "Sample of infrequent 2-grams in the three databases")
+```{r, echo=FALSE}
+knitr::kable(wordsample, caption ="Random  sample of infrequent words")
+knitr::kable(feww2gramstable, caption= "Random sample of infrequent 2-grams")
 ```
 
 
@@ -476,20 +462,26 @@ knitr::kable(feww2gramstable, caption= "Sample of infrequent 2-grams in the thre
 `
 
 ```{r, echo=FALSE, cache=2}
-knitr::kable(most_freq_words, caption= "Most frequent words in the three databases")
+knitr::kable(most_freq_words, caption= "Most frequent words in the three datasets")
 ```
 
 ```{r, echo=FALSE, cache=2}
-knitr::kable(most_freq_2gr , caption= "Most frequent 2-gram in the three datasets")
+knitr::kable(most_freq_2gr , caption= "Most frequent 2-grams in the three datasets")
 ```
 
 
 ##Graphical representation of the frequency count tables 
 
+
+In the plot below, we have set out the logs of the variables in the "frequency count table". Thus, on the horizontal axis, we represent the log of the number of different words/2-grams occurring a given number of times in each dataset (where the vertical represents the log of the count of this word/2-grams in the dataset). 
+
+If the counts would follow a power law, the plots would follow a linear trend. However, we observe that this linear trend only holds (approximately) for unique words and 2-grams that occur less than 100 times in the total dataset. After this threshold, we see that there is an increasing spread around the linear trend: for words that occur very often, it is very unlikely that there is another word with exactly the same count in the dataset (and log(Number of words) is thus very likely to be zero).  
+
+
 ```{r, echo=FALSE, cache=2}
-a <- qplot(log10(CounttableTwit[,2]),log10(CounttableTwit[,1])   , data= CounttableTwit) +xlab("log(Number of words)") + ylab("log(Counts in Twitter)") 
-b <- qplot(log10(Counttableblogs[,2]),log10(Counttableblogs[,1])   , data= Counttableblogs) +xlab("log(Number of words)") + ylab("log(Counts in blogs)") 
-c <- qplot(log10(Counttablenews[,2]),log10(Counttablenews[,1])   , data= Counttablenews) +xlab("log(Number of words)") + ylab("log(Counts in news)") 
+a <- qplot(log10(CounttableTwit[,1]),log10(CounttableTwit[,2])   , data= CounttableTwit) +xlab("log(Number of words)") + ylab("log(Counts in Twitter)") 
+b <- qplot(log10(Counttableblogs[,1]),log10(Counttableblogs[,2])   , data= Counttableblogs) +xlab("log(Number of words)") + ylab("log(Counts in blogs)") 
+c <- qplot(log10(Counttablenews[,1]),log10(Counttablenews[,2])   , data= Counttablenews) +xlab("log(Number of words)") + ylab("log(Counts in news)") 
 library(grid)
 grid.newpage()
 pushViewport(viewport(layout = grid.layout(2, 2)))
@@ -505,9 +497,9 @@ print(c, vp = vplayout(2, 1))
 
 
 ```{r, echo=FALSE, cache=2}
-d <- qplot(log10(CounttableTwit2Gr[,2]),log10(CounttableTwit2Gr[,1])   , data= CounttableTwit2Gr) +xlab("log(Number of 2-gr)") + ylab("log(Counts in Twitter)")   
-e <- qplot(log10(Counttableblogs2Gr[,2]),log10(Counttableblogs2Gr[,1])   , data= Counttableblogs2Gr) +xlab("log(Number of 2-gr)") + ylab("log(Counts in blogs)") 
-f <- qplot(log10(Counttablenews2Gr[,2]),log10(Counttablenews2Gr[,1])   , data= Counttablenews2Gr) +xlab("log(Number of 2-gr)") + ylab("log(Counts in news)") 
+d <- qplot(log10(CounttableTwit2Gr[,1]),log10(CounttableTwit2Gr[,2])   , data= CounttableTwit2Gr) +xlab("log(Number of 2-gr)") + ylab("log(Counts in Twitter)")   
+e <- qplot(log10(Counttableblogs2Gr[,1]),log10(Counttableblogs2Gr[,2])   , data= Counttableblogs2Gr) +xlab("log(Number of 2-gr)") + ylab("log(Counts in blogs)") 
+f <- qplot(log10(Counttablenews2Gr[,1]),log10(Counttablenews2Gr[,2])   , data= Counttablenews2Gr) +xlab("log(Number of 2-gr)") + ylab("log(Counts in news)") 
 library(grid)
 grid.newpage()
 pushViewport(viewport(layout = grid.layout(2, 2)))
