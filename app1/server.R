@@ -32,7 +32,7 @@ shinyServer(
   function(input, output, session) {
   #probably will need renderTable
    output$text1 <- renderText({ 
-#  output$text1 <- renderTable({ 
+#   output$text1 <- renderTable({ 
 #     dataInput <- reactive({
 #       getSymbols(input$searchstring, input$corpus)
 #     })
