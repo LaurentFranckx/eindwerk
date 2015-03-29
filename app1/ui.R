@@ -1,27 +1,29 @@
 library(shiny)
 
 shinyUI(fluidPage(
-  titlePanel("Basic widgets"),
+  titlePanel("Next word prediction"),
   
 sidebarLayout(
     sidebarPanel(
-           checkboxGroupInput("corpus", 
+        h3("Some guidance"),
+        helpText("First select the type of text you are writing (tweet, news article, blog).
+              Then start writing your sentence - the app will start searching for the best
+              prediction of the next word as soon as you hit the 'space' button. 
+              "),
+          radioButtons("corpus", 
                               label = h3("Preferred corpus"), 
                               choices = list("twitter" = "twitter", 
                                              "news" = "news", "blogs" = "blogs"),
                               selected = "twitter"),
  
-           h3("Help text"),
-           helpText("Note: help text isn't a true widget,", 
-                    "but it provides an easy way to add text to",
-                    "accompany other widgets."), 
+ 
            textInput("searchstring", label = h3("Text input"), 
                      value = "Enter text...")
  ) ,  
 
 
 mainPanel(
-#  uiOutput("debugTools"),
+  uiOutput("debugTools"),
   textOutput("text1")
   
 )

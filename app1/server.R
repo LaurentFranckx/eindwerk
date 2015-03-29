@@ -6,35 +6,26 @@ library(quantmod)
 source("searchwords.R")
 
 
+
 # assign("%&%",  function (a, b) paste(a, b, sep = ""))
 # catn = function(...) cat(..., "\n")
 # wasClicked =  function(button) {
-#          if(exists("input"))  (!is.null(button) ) {    if(button > 0) {        
-#            return(TRUE)        }      }
-#          return(FALSE)
-#        }
+#   if(exists("input"))  
+#     if(!is.null(button) ) {
+#       if(button > 0) {        
+#         return(TRUE)
+#       }
+#     }
+#   return(FALSE)
+# }
 # 
+# rValues = reactiveValues() 
+# thisSession <<- session
 # 
 # source("debugTools.R", local=TRUE)
 
-corpusnames <- c("news","twitter","blogs")
-#strgtgth <- 3
-corpuslist <- list()
-for(corpus in corpusnames){
-  for(strgtgth in 1:3){
-    load(file.path("data",paste("US.", corpus, strgtgth +1, "Markov.RData" , sep= "")))
-    name_df <- paste("US.",corpus, strgtgth +1, "Markov", sep ="" )
-    searchcorpus <- get(name_df)
-    #   searchmatrix <- paste(corpus,"search", sep="")
-    #   assign(searchmatrix, searchcorpus$ML1 ) 
-    corpuslist[[name_df]] <- searchcorpus  
-  }
-}
 
-
-
-
-
+load(file = "data/corpuslist.RData")
 
 # Define server logic required to draw a histogram
 shinyServer(
@@ -46,10 +37,11 @@ shinyServer(
 #       getSymbols(input$searchstring, input$corpus)
 #     })
 #     result <-       SearchStrCorpus(dataInput(), corpuslist)
+     #or use length(strsplit(str1, split = " ")[[1]]) -1 to find number of blanks
     if(grepl("[[:space:]]+$", input$searchstring)){
       result <-       SearchStrCorpus(input$searchstring, input$corpus, corpuslist)
     } else {
-      paste("Push the return buton to get a suggestion for a next word.")
+      paste("Enter a space to get a suggestion for a next word.")
     }
 #    paste("You want complete ",input$searchstring, "based on ", input$corpus)
   })
