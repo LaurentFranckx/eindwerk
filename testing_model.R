@@ -9,7 +9,7 @@ source("app1/searchwords.R")
 
 set.seed(123)
 corpuses <- c("news", "twitter", "blogs")
-samplesize <- 50
+samplesize <- 1000
 accu_mat <- matrix(rep(1,9), nrow=3)
 accu_mat <- as.data.frame(accu_mat)
 row.names(accu_mat) <- corpuses
@@ -37,7 +37,7 @@ for(TestCorpus in corpuses){
 )
 
 
-
-
+save(accu_mat, file = "accum_mat_3gr.RData")
+save(accu_mat, file = "accum_mat_2gr.RData")
   
   
