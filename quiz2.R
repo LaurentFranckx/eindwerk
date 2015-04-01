@@ -88,6 +88,22 @@ egrep "beach" D:/coursera/caps_res/romanticdate.txt
 egrep "mall" D:/coursera/caps_res/romanticdate.txt
 
 
+egrep -c "grocery" D:/coursera/caps_res/romanticdate.txt
+egrep -c "movies" D:/coursera/caps_res/romanticdate.txt 
+egrep -c "beach" D:/coursera/caps_res/romanticdate.txt
+egrep -c "mall" D:/coursera/caps_res/romanticdate.txt
+
+
+egrep "data" D:/coursera/dsc_capstone/Coursera-SwiftKey/final/en_US/*.txt > D:/coursera/caps_res/date.txt
+
+egrep -c "grocery" D:/coursera/caps_res/date.txt
+egrep -c "movies" D:/coursera/caps_res/date.txt 
+egrep -c "beach" D:/coursera/caps_res/date.txt
+egrep -c "mall" D:/coursera/caps_res/date.txt
+
+
+
+
 SearchStrCorpus("Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my", "US.blogs")
 260654  own  0.5483871
 52576  mind  0.2258065
