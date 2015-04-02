@@ -23,8 +23,9 @@ sidebarLayout(
 
 
 mainPanel(
-  uiOutput("debugTools"),
-  textOutput("text1")
+#   uiOutput("debugTools"),
+#   textOutput("text1")
+  uiOutput("text1")
   
 )
 

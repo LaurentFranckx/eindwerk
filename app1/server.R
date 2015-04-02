@@ -31,7 +31,8 @@ load(file = "data/corpuslist.RData")
 shinyServer(
   function(input, output, session) {
   #probably will need renderTable
-   output$text1 <- renderText({ 
+#   output$text1 <- renderText({ 
+     output$text1 <- renderUI({  
 #   output$text1 <- renderTable({ 
 #     dataInput <- reactive({
 #       getSymbols(input$searchstring, input$corpus)
@@ -40,6 +41,7 @@ shinyServer(
      #or use length(strsplit(str1, split = " ")[[1]]) -1 to find number of blanks
     if(grepl("[[:space:]]+$", input$searchstring)){
       result <-       SearchStrCorpus(input$searchstring, input$corpus, corpuslist)
+      selectInput("result", "Choose the next word", result)
     } else {
       paste("Enter a space to get a suggestion for a next word.")
     }
@@ -50,7 +52,12 @@ shinyServer(
 
   }
 
-
-
-
 )
+
+
+
+
+
+
+
+
