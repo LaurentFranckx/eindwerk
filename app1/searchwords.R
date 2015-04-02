@@ -1,7 +1,13 @@
 #to do: add correction factor 0.4 for score in stupid backoff, and final prob when no prediction in corpus
 # see "Interpolation" page on Stanfor NLP
 
-
+SearchWrapper <- function(searchstring, corpus, corpuslist){
+  result <- SearchStrCorpus(searchstring, corpus, corpuslist)
+  if(length(result) == 0) result[c(1,2,3)] <- "hunk"
+  if(length(result) == 1) result[c(2,3)] <- "hunk"
+  if(length(result) == 2) result[3] <- "hunk"
+  return(result)
+}
 
 SearchStrCorpus <- function(searchstring, corpus, corpuslist){
   splitstring <- strsplit(searchstring, " ")[[1]]
@@ -23,9 +29,12 @@ SearchStrCorpus <- function(searchstring, corpus, corpuslist){
  #     cat("New search string is: ", search_string, ".\n", sep="")
 #      stringlenth <- 2
       result <- SearchStrCorpus(search_string, corpus, corpuslist)
+#once you have only word left, you cannot strip any further
     } else if (or_stringlenth == 1){
+#    } else if (or_stringlenth == 0){
       #result <- c("a",0)
       result <- c("and ")
+      
     } else {
         search_string <- paste(splitstring[or_stringlenth],  sep=" ")
        # cat("New search string is: ", search_string, ".\n")
@@ -50,34 +59,36 @@ SearchClStrCorpus <- function(search_string, strgtgth, corpus, corpuslist){
 #  ML1_est <- ML1_df[ML1_df$first == search_string, c("V3", "Bayes_prob")]
   ML1_est <- ML1_df[ML1_df$first == search_string, "V3"]
   ML_est <- ML1_est
-  return(ML1_est)
-# the requirements are to only return the most likely word
-#   if(length(ML1_est) == 0){
-#     return(ML1_est)
-#   } else {
-#     ML2_df <- Markovchains$ML2
-# #     names(ML2_df) <- gsub("to_predict","V3", names(ML2_df) )
-# #     names(ML2_df) <- gsub("V5","V3", names(ML2_df) )
-#     ML2_df$V3 <- as.character(ML2_df$V3)
-#     #maybe no need to return bayes prob in real application
-#     #ML2_est <- ML2_df[ML2_df$first == search_string, c("V3", "Bayes_prob") ]
-#     ML2_est <- ML2_df[ML2_df$first == search_string, "V3" ]
-#     ML_est <- rbind(ML_est, ML2_est)
-#     if(length(ML2_est) == 0){
-#       return(ML_est)
-#     } else {
-#       ML3_df <- Markovchains$ML3
-# #       names(ML3_df) <- gsub("to_predict","V3", names(ML3_df) )
-# #       names(ML3_df) <- gsub("V5","V3", names(ML3_df) )
-#       ML3_df$V3 <- as.character(ML3_df$V3)
-#       #maybe no need to return bayes prob in real application
-#       #ML3_est <- ML3_df[ML3_df$first == search_string, c("V3", "Bayes_prob")]
-#       ML3_est <- ML3_df[ML3_df$first == search_string, "V3"]
-#       ML_est <- rbind(ML_est, ML3_est)
-#       return(ML_est)
-#     }
-#     
-#   }
+#  return(ML1_est)
+#the requirements are to only return the most likely word
+  if(length(ML1_est) == 0){
+    return(ML1_est)
+  } else {
+    ML2_df <- Markovchains$ML2
+#     names(ML2_df) <- gsub("to_predict","V3", names(ML2_df) )
+#     names(ML2_df) <- gsub("V5","V3", names(ML2_df) )
+    ML2_df$V3 <- as.character(ML2_df$V3)
+    #maybe no need to return bayes prob in real application
+    #ML2_est <- ML2_df[ML2_df$first == search_string, c("V3", "Bayes_prob") ]
+    ML2_est <- ML2_df[ML2_df$first == search_string, "V3" ]
+#    if(is.null(ML2_est)) ML3_est <- "HUNK"
+    ML_est <- rbind(ML_est, ML2_est)
+    if(length(ML2_est) == 0){
+      return(ML_est)
+    } else {
+      ML3_df <- Markovchains$ML3
+#       names(ML3_df) <- gsub("to_predict","V3", names(ML3_df) )
+#       names(ML3_df) <- gsub("V5","V3", names(ML3_df) )
+      ML3_df$V3 <- as.character(ML3_df$V3)
+      #maybe no need to return bayes prob in real application
+      #ML3_est <- ML3_df[ML3_df$first == search_string, c("V3", "Bayes_prob")]
+      ML3_est <- ML3_df[ML3_df$first == search_string, "V3"]
+      if(is.null(ML3_est)) ML3_est <- "HUNK"
+      ML_est <- rbind(ML_est, ML3_est)
+      return(ML_est)
+    }
+    
+  }
   
 }  
 
