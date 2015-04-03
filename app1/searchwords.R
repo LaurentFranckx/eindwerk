@@ -33,6 +33,7 @@ SearchStrCorpus <- function(searchstring, corpus, corpuslist, ML_est = character
     } else if (or_stringlenth == 1){
       result <- c("a ")
       result <- ML_est
+      rm(ML_est)
       return(result)
     } else {
       search_string <- paste(splitstring[or_stringlenth],  sep=" ")
@@ -41,6 +42,7 @@ SearchStrCorpus <- function(searchstring, corpus, corpuslist, ML_est = character
     
   } else if(length(ML_est) == 3){
       result <- ML_est
+      rm(ML_est)
       return(result)
     } else {
       stop("ML_est should before it grows larger than four. ")
@@ -56,7 +58,9 @@ SearchClStrCorpus <- function(search_string, strgtgth, corpus, corpuslist, ML_es
   #maybe no need to return bayes prob in real application
 #  ML1_est <- ML1_df[ML1_df$first == search_string, c("V3", "Bayes_prob")]
   ML1_est <- ML1_df[ML1_df$first == search_string, "V3"]
-  ML_est <- c(ML_est,ML1_est)
+  if(length(ML1_est) > 0) {
+    if (length(ML_est) == 0 | !(ML1_est %in% ML_est )) ML_est <- c(ML_est,ML1_est)   
+  } 
   if(length(ML_est) == 3| length(ML1_est) == 0){
     return(ML_est)
   } else {
@@ -65,7 +69,9 @@ SearchClStrCorpus <- function(search_string, strgtgth, corpus, corpuslist, ML_es
     #maybe no need to return bayes prob in real application
     #ML2_est <- ML2_df[ML2_df$first == search_string, c("V3", "Bayes_prob") ]
     ML2_est <- ML2_df[ML2_df$first == search_string, "V3" ]
-    ML_est <- c(ML_est,ML2_est)
+    if(length(ML2_est) > 0){
+      if (length(ML_est) == 0 | !(ML2_est %in% ML_est)) ML_est <- c(ML_est,ML2_est)
+       } 
     if(length(ML_est) == 3 | length(ML2_est) == 0){
       return(ML_est)
     } else {
@@ -74,7 +80,9 @@ SearchClStrCorpus <- function(search_string, strgtgth, corpus, corpuslist, ML_es
       #maybe no need to return bayes prob in real application
       #ML3_est <- ML3_df[ML3_df$first == search_string, c("V3", "Bayes_prob")]
       ML3_est <- ML3_df[ML3_df$first == search_string, "V3"]
-      ML_est <- c(ML_est,ML3_est)
+      if(length(ML3_est) > 0){
+        if(length(ML_est) == 0 | !(ML3_est %in% ML_est))  ML_est <- c(ML_est,ML3_est)        
+      } 
     }
     
   }
