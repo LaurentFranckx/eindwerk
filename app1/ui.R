@@ -10,7 +10,7 @@ sidebarLayout(
         In order to run a test, first select the type of text you are writing (tweet, news article, blog).
               Then start writing your sentence - the app will start searching for the best
               prediction of the next word as soon as you hit the 'space' button. 
-              On the right panel, you will get a drop down list with three suggestions for the next word.
+              Beneath the current panel, you will get a drop down list with three suggestions for the next word.
              Please note that, if you add a new word to your sentence before the suggestions appear, 
               the app will relaunch its search based on your most recent input. 
              The app has been optimised for predictions based on the three most recent words you have typed.
@@ -25,13 +25,16 @@ sidebarLayout(
  
  
            textInput("searchstring", label = h3("Text input"), 
-                     value = "Enter text...")
+                     value = "Enter text..."),
+        
+        width = 10
  ) ,  
 
 
 mainPanel(
 #   uiOutput("debugTools"),
 #   textOutput("text1")
+  
   uiOutput("text1")
   
 )

@@ -57,30 +57,47 @@ SearchClStrCorpus <- function(search_string, strgtgth, corpus, corpuslist, ML_es
   ML1_df$V3 <- as.character(ML1_df$V3)
   #maybe no need to return bayes prob in real application
 #  ML1_est <- ML1_df[ML1_df$first == search_string, c("V3", "Bayes_prob")]
-  ML1_est <- ML1_df[ML1_df$first == search_string, "V3"]
-  if(length(ML1_est) > 0) {
+ # ML1_est <- ML1_df[ML1_df$first == search_string, "V3"]
+
+   illus_amatch <- amatch(search_string ,ML1_df$first, method = "jw",maxDist=0.1)
+   ML1_amatch  <- ML1_df[illus_amatch,  ]
+   ML1_est <- ML1_amatch[,"V3"]
+
+  if(!is.na(ML1_est)) {
     if (length(ML_est) == 0 | !(ML1_est %in% ML_est )) ML_est <- c(ML_est,ML1_est)   
   } 
-  if(length(ML_est) == 3| length(ML1_est) == 0){
+#  if(length(ML_est) == 3| length(ML1_est) == 0){
+  if(length(ML_est) == 3| is.na(ML1_est)){
     return(ML_est)
   } else {
     ML2_df <- Markovchains$ML2
     ML2_df$V3 <- as.character(ML2_df$V3)
     #maybe no need to return bayes prob in real application
     #ML2_est <- ML2_df[ML2_df$first == search_string, c("V3", "Bayes_prob") ]
-    ML2_est <- ML2_df[ML2_df$first == search_string, "V3" ]
-    if(length(ML2_est) > 0){
+    #ML2_est <- ML2_df[ML2_df$first == search_string, "V3" ]
+    
+    illus_amatch <- amatch(search_string ,ML2_df$first, method = "jw",maxDist=0.1)
+    ML2_amatch  <- ML2_df[illus_amatch,  ]
+    ML2_est <- ML2_amatch[,"V3"]
+    if(!is.na(ML2_est)){
       if (length(ML_est) == 0 | !(ML2_est %in% ML_est)) ML_est <- c(ML_est,ML2_est)
        } 
-    if(length(ML_est) == 3 | length(ML2_est) == 0){
+#    if(length(ML_est) == 3 | length(ML2_est) == 0){
+    if(length(ML_est) == 3 | is.na(ML2_est) ){
       return(ML_est)
     } else {
       ML3_df <- Markovchains$ML3
       ML3_df$V3 <- as.character(ML3_df$V3)
       #maybe no need to return bayes prob in real application
       #ML3_est <- ML3_df[ML3_df$first == search_string, c("V3", "Bayes_prob")]
-      ML3_est <- ML3_df[ML3_df$first == search_string, "V3"]
-      if(length(ML3_est) > 0){
+      #ML3_est <- ML3_df[ML3_df$first == search_string, "V3"]
+      
+      illus_amatch <- amatch(search_string ,ML3_df$first, method = "jw",maxDist=0.1)
+      ML3_amatch  <- ML3_df[illus_amatch,  ]
+      ML3_est <- ML3_amatch[,"V3"]
+      
+#      if(length(ML3_est) > 0){
+        if(!is.na(ML3_est)){
         if(length(ML_est) == 0 | !(ML3_est %in% ML_est))  ML_est <- c(ML_est,ML3_est)        
       } 
     }
