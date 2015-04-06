@@ -88,20 +88,37 @@ names(MarkovMat2List) <- corpusnames
 
 ###calculate the weights for twitter
 #with sample of 1000, 4000, 6000, all weights should go to highest n-gram
-samplesize <- 4000
+#samplesize <- 100000
 #from 8000 is too close to the limit
-samplefromtable <- sample(nrow(MarkovMat4List[["twitter"]]),samplesize)
+#samplefromtable <- sample(nrow(MarkovMat4List[["twitter"]]),samplesize)
+
+
 table1 <- MarkovMat4List[["twitter"]]
-table1 <- table1[samplefromtable, ]
+
+#alternative: do not sample rom table, from from unique 4grams (is the same because 4 grams are unique)
+#FourGr <- table1$FourGr
+#table1 <- table1[samplefromtable, ]
 
 #testmat <- merge(data.table(MarkovMat4List[["news"]]),data.table(MarkovMat3List[["twitter"]]), by = "TwoGr")
-testmat <- join(table1,MarkovMat3List[["twitter"]])
+#testmat <- join(table1,MarkovMat3List[["twitter"]])
+
+table1 <- data.table(table1)
+names(table1) <- gsub("Pred4Gr","PredWd",names(table1) )
+table2 <- data.table(MarkovMat3List[["twitter"]])
+names(table2) <- gsub("Pred3Gr","PredWd",names(table2) )
+testmat <- merge(table1, table2, by = c("TwoGr","PredWd"))
+
 #testmat[testmat$Pred4gr == " a "  , ]
+#testmat <- testmat[testmat$Pred4Gr == testmat$Pred3Gr  , ]
 
-testmat <- testmat[testmat$Pred4Gr == testmat$Pred3Gr  , ]
+#testmat <- join(testmat,MarkovMat2List[["twitter"]])
 
-testmat <- join(testmat,MarkovMat2List[["twitter"]])
-testmat <- testmat[testmat$Pred4Gr == testmat$Pred2Gr  , ]
+testmat <- data.table(testmat)
+#names(testmat) <- gsub("Pred3Gr","PredWd",names(testmat) )
+table2 <- data.table(MarkovMat2List[["twitter"]])
+names(table2) <- gsub("Pred2Gr","PredWd",names(table2) )
+testmat <- merge(testmat, table2, by = c("OneGr","PredWd"))
+#testmat <- testmat[testmat$Pred4Gr == testmat$Pred2Gr  , ]
 
 FrGrForVal <- testmat$FourGr
 
@@ -110,8 +127,9 @@ ValidDF <- MarkovMat4List[["news"]]
 ValidDF2 <- ValidDF[ValidDF$FourGr %in% FrGrForVal, c("FourGr", "Freq4Gr") ]
 names(ValidDF2) <- gsub( "Freq4Gr" , "Freq4GrVal", names(ValidDF2))
 anyDuplicated(ValidDF2$FourGr)
+ValidDF2 <- data.table(ValidDF2)
 
-testmat2 <- join(testmat, ValidDF2)
+testmat2 <- merge(testmat, ValidDF2, by = "FourGr", all.x = TRUE)
 testmat2[is.na(testmat2) ]  <- 0
 
 #http://cran.r-project.org/web/packages/lpSolve/lpSolve.pdf
@@ -218,6 +236,10 @@ res <- nloptr( x0=x0,
                eval_g_eq=eval_g_eq, opts = opts)
 
 res$solution
+sprintf("%1.15f",res$solution)
+res$objective/10^6 
+
+
 
 # with tweets for training, blogs/news for validation give same result
 # > res$solution

@@ -9,7 +9,7 @@ source("app1/searchwords.R")
 
 set.seed(123)
 corpuses <- c("news", "twitter", "blogs")
-samplesize <- 5000
+samplesize <- 100
 accu_mat <- expand.grid(corpuses,corpuses)
 names(accu_mat) <- c("TestCorpus", "TrainCorpus")
 accu_mat$accu1 <- c(0)
@@ -47,7 +47,7 @@ for(i in 2:4){
       accu_mat[accu_mat$TestCorpus == TestCorpus & accu_mat$TrainCorpus == TrainCorpus,  c("accu1","accu2","accu3")] <- sprintf("%1.2f"  , c(accuracy1, accuracy2,accuracy3 ))
     }
   }
-  #save(accu_mat, file = paste("accum_mat_",i, "gr.RData", sep=""))
+  save(accu_mat, file = paste("accum_mat_",i, "gr_amatch.RData", sep=""))
   cat("Finalised for prediction based on ", i , " words.\n")
 }
 )
