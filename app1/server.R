@@ -2,6 +2,8 @@
 
 library(shiny)
 library(quantmod)
+library(stringdist)
+
 
 source("searchwords.R")
 
