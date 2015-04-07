@@ -15,8 +15,18 @@ SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.1){
     maxn <- max(result$n)
     result$weight_prob <- with(result, Bayes_prob * (1 - distance))
     result$weight_bo <- with(result, weight_prob * (1-decrease)^(maxn-n))
-    final_res <- aggregate(result$weight_bo, by = list(result$predword), FUN = sum)
-  return(list(rawresult,result,final_res))
+    if(nrow(result) == 0){
+      final_res <- c(NA,NA,NA)
+    #  return(character(0))
+    } else {
+      final_res <- aggregate(result$weight_bo, by = list(result$predword), FUN = sum)
+      
+      final_res <- final_res[order(final_res$x, decreasing = TRUE),]
+      final_res <- final_res[1:3, 1]
+      final_res <- as.character(final_res)   
+    }
+return(final_res)
+#  return(list(rawresult,result,final_res))
 }
 
 
@@ -75,7 +85,7 @@ SearchClStrCorpus <- function(search_string, strgtgth, corpus, corpuslist, ML_es
   ML1_amatch  <- ML1_df[illus_amatch,  ]
   #   ML1_est <- ML1_amatch[,"V3"]
   ML1_est <- ML1_amatch[,c("first","V3", "Bayes_prob")]
-  dist1 <- stringdist(search_string ,ML1_est$first, method = "jw",maxDist=0.1)
+  dist1 <- stringdist(search_string ,ML1_est$first, method = "jw")
   ML1_est <- as.data.frame(c(ML1_est, dist1, strgtgth))
   names(ML1_est) <- names_ML
   #  if(!is.na(ML1_est)) {
@@ -102,7 +112,7 @@ SearchClStrCorpus <- function(search_string, strgtgth, corpus, corpuslist, ML_es
   ML2_amatch  <- ML2_df[illus_amatch,  ]
 # ML2_est <- ML2_amatch[,"V3"]
   ML2_est <- ML2_amatch[,c("first","V3", "Bayes_prob")]
-  dist2 <- stringdist(search_string ,ML2_est$first, method = "jw",maxDist=0.1)
+  dist2 <- stringdist(search_string ,ML2_est$first, method = "jw")
   ML2_est <- as.data.frame(c(ML2_est, dist2, strgtgth))
   names(ML2_est) <- names_ML
 
@@ -131,7 +141,7 @@ SearchClStrCorpus <- function(search_string, strgtgth, corpus, corpuslist, ML_es
   ML3_amatch  <- ML3_df[illus_amatch,  ]
 #ML3_est <- ML3_amatch[,"V3"]
   ML3_est  <- ML3_amatch[,c("first","V3", "Bayes_prob")]
-  dist3 <- stringdist(search_string ,ML3_est$first, method = "jw",maxDist=0.1)
+  dist3 <- stringdist(search_string ,ML3_est$first, method = "jw")
   ML3_est <- as.data.frame(c(ML3_est, dist3, strgtgth))
   names(ML3_est) <- names_ML
 
