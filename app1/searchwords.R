@@ -4,8 +4,8 @@
 
 # see "Interpolation" page on Stanfor NLP
 
-SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.25){
-    rawresult <- SearchStrCorpus(searchstring, corpus, corpuslist)
+SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.25, maxlength = 3){
+    rawresult <- SearchStrCorpus(searchstring, corpus, corpuslist, maxlength)
 #   if(length(result) == 0) result[c(1,2,3)] <- c("a ", "and ", "I ")
 #   if(length(result) == 1) result[c(2,3)] <- c("a ", "and ")
 #   if(length(result) == 2) result[3] <- c("a ")
@@ -31,21 +31,22 @@ return(final_res)
 
 
 
-SearchStrCorpus <- function(searchstring, corpus, corpuslist, ML_est = character()){
+SearchStrCorpus <- function(searchstring, corpus, corpuslist, maxlength,  ML_est = character()){
   splitstring <- strsplit(searchstring, " ")[[1]]
   stringlenth <- length(splitstring)
   or_stringlenth <- stringlenth
-  if(stringlenth < 5){
+  if(stringlenth < maxlength + 1){
     search_string <- paste(searchstring, " ", sep="")
   } else {
-    search_string <- paste(splitstring[stringlenth -3],splitstring[stringlenth -2], splitstring[stringlenth -1], splitstring[stringlenth], "", sep=" ")
-    stringlenth <- 4
+    search_string <- ""
+    for(i in 0: (maxlength -1 )) search_string <- paste(splitstring[stringlenth -i], search_string, sep=" ")
+    stringlenth <- maxlength
   }
   ML_est <- SearchClStrCorpus(search_string, stringlenth, corpus, corpuslist, ML_est)
 #  if(length(ML_est) < 3) {
     if(or_stringlenth > 2){
       search_string <- paste(splitstring[or_stringlenth -1], splitstring[or_stringlenth],  sep=" ")
-      ML_est <- SearchStrCorpus(search_string, corpus, corpuslist, ML_est)
+      ML_est <- SearchStrCorpus(search_string, corpus, corpuslist,maxlength, ML_est = ML_est)
       #once you have only word left, you cannot strip any further
     } else if (or_stringlenth == 1){
 #      result <- c("a ")
@@ -54,7 +55,7 @@ SearchStrCorpus <- function(searchstring, corpus, corpuslist, ML_est = character
       return(result)
     } else {
       search_string <- paste(splitstring[or_stringlenth],  sep=" ")
-      ML_est <- SearchStrCorpus(search_string, corpus, corpuslist, ML_est)      
+      ML_est <- SearchStrCorpus(search_string, corpus, corpuslist, maxlength, ML_est = ML_est)      
     }   
     
 #   } else if(length(ML_est) == 3){

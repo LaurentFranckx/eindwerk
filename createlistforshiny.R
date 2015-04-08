@@ -44,6 +44,7 @@ CreateCorpusList <- function(corpusnames, strglthlist){
       #   assign(searchmatrix, searchcorpus$ML1 ) 
       listtouse <- list(searchcorpus$ML1, searchcorpus$ML2, searchcorpus$ML3) 
       names(listtouse) <- c("ML1","ML2","ML3")
+      name_df <- paste("US.",corpus, strgtgth +1, "Markov", sep ="" )
       
       corpuslist[[name_df]] <- listtouse
     }
@@ -53,7 +54,7 @@ CreateCorpusList <- function(corpusnames, strglthlist){
 }
 
 
-corpuslist <- CreateCorpusList(corpusnames, 1:4)
+corpuslist <- CreateCorpusList(corpusnames, 1:3)
 
 
 save(corpuslist, file = "D:/coursera/dsc_capstone/app1/data/corpuslist.RData")

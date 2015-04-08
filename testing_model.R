@@ -20,8 +20,8 @@ accu_mat$accu3 <- c(0)
 options(warn=-1)
 
 
-TestCorpus <- "blogs"
-TrainCorpus <- "news"
+# TestCorpus <- "blogs"
+# TrainCorpus <- "news"
 
 #according to validation gives best results, but works very poorly when tested out of sample
 #k = 0.15
@@ -34,7 +34,8 @@ k = 0.25
 #k = 0.15
 
 system.time(
-for(i in 2:4){
+#for(i in 2:4){
+for(i in 5){   
   cat("started for i = ", i , "\n")
 #  for(k in seq(0.05,0.2, by = 0.05)){
 #  for(k in seq(0.13,0.17, by = 0.02)){
@@ -63,7 +64,7 @@ for(i in 2:4){
     accuracy1 <- accuracy1num/nrow(TextToTest)
     accuracy2 <- (accuracy1num + accuracy2num)/nrow(TextToTest)
     accuracy3 <- (accuracy1num + accuracy2num + accuracy3num)/nrow(TextToTest)
-          TextToTest_name <- paste("tst_vs_tr",i, TestCorpus,  TrainCorpus, "k15", sep="_")
+          TextToTest_name <- paste("tst_vs_tr",i, TestCorpus,  TrainCorpus, "k",k, sep="_")
           assign(TextToTest_name, TextToTest)
           save(TextToTest, file = paste(TextToTest_name, "RData", sep="."))
     cat(sprintf("%1.2f"  ,c(accuracy1, accuracy2,accuracy3 ) ), "\n")
@@ -72,7 +73,7 @@ for(i in 2:4){
       }
     
 #  }
-  name_accumat <- paste("accum_mat_",i, "gr_amatch", "k15", sep="")
+  name_accumat <- paste("accum_mat_",i, "gr_amatch", "k", k, sep="")
   assign(name_accumat, accu_mat)
   save(accu_mat, file = paste(name_accumat, "RData", sep="."))
   cat("Finalised for prediction based on ", i , " words.\n")
