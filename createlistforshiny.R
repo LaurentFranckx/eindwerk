@@ -1,5 +1,5 @@
-setwd("D:/coursera/dsc_capstone")
-
+#setwd("D:/coursera/dsc_capstone")
+setwd("D:/coursera/caps_res")
 
 corpusnames <- c("news","twitter","blogs")
 #strgtgth <- 3
@@ -10,15 +10,27 @@ CreateCorpusList <- function(corpusnames, strglthlist){
   for(corpus in corpusnames){
     for(strgtgth in strglthlist){
       load(paste("US.", corpus, strgtgth +1, "Markov.RData" , sep= ""))
-      name_df <- paste("US.",corpus, strgtgth +1, "Markov", sep ="" )
+      if(strgtgth <4 ){
+        name_df <- paste("US.",corpus, strgtgth +1, "Markov", sep ="" )
+      } else {
+        name_df <- paste(corpus, strgtgth +1, "Markov", sep ="" )
+        
+      }
       searchcorpus <- get(name_df)
       
       names(searchcorpus$ML1) <- gsub("to_predict","V3", names(searchcorpus$ML1) )
-      names(searchcorpus$ML1) <- gsub("V5","V3", names(searchcorpus$ML1) )                                 
+      names(searchcorpus$ML1) <- gsub("V5","V3", names(searchcorpus$ML1) ) 
+      names(searchcorpus$ML1) <- gsub("V6","V3", names(searchcorpus$ML1) ) 
+      
       names(searchcorpus$ML2) <- gsub("to_predict","V3", names(searchcorpus$ML2) )
       names(searchcorpus$ML2) <- gsub("V5","V3", names(searchcorpus$ML2))
+      names(searchcorpus$ML2) <- gsub("V6","V3", names(searchcorpus$ML2))
+      
+      
       names(searchcorpus$ML3) <- gsub("to_predict","V3", names(searchcorpus$ML3) )
       names(searchcorpus$ML3) <- gsub("V5","V3", names(searchcorpus$ML3))
+      names(searchcorpus$ML3) <- gsub("V6","V3", names(searchcorpus$ML3))
+      
       
       #       cat(names(searchcorpus$ML1), "\n")
       #       cat(names(searchcorpus$ML2), "\n")
@@ -41,7 +53,7 @@ CreateCorpusList <- function(corpusnames, strglthlist){
 }
 
 
-corpuslist <- CreateCorpusList(corpusnames, 1:3)
+corpuslist <- CreateCorpusList(corpusnames, 1:4)
 
 
 save(corpuslist, file = "D:/coursera/dsc_capstone/app1/data/corpuslist.RData")

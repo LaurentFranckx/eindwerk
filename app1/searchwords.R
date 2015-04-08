@@ -4,7 +4,7 @@
 
 # see "Interpolation" page on Stanfor NLP
 
-SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.1){
+SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.25){
     rawresult <- SearchStrCorpus(searchstring, corpus, corpuslist)
 #   if(length(result) == 0) result[c(1,2,3)] <- c("a ", "and ", "I ")
 #   if(length(result) == 1) result[c(2,3)] <- c("a ", "and ")
@@ -35,11 +35,11 @@ SearchStrCorpus <- function(searchstring, corpus, corpuslist, ML_est = character
   splitstring <- strsplit(searchstring, " ")[[1]]
   stringlenth <- length(splitstring)
   or_stringlenth <- stringlenth
-  if(stringlenth < 4){
+  if(stringlenth < 5){
     search_string <- paste(searchstring, " ", sep="")
   } else {
-    search_string <- paste(splitstring[stringlenth -2], splitstring[stringlenth -1], splitstring[stringlenth], "", sep=" ")
-    stringlenth <- 3
+    search_string <- paste(splitstring[stringlenth -3],splitstring[stringlenth -2], splitstring[stringlenth -1], splitstring[stringlenth], "", sep=" ")
+    stringlenth <- 4
   }
   ML_est <- SearchClStrCorpus(search_string, stringlenth, corpus, corpuslist, ML_est)
 #  if(length(ML_est) < 3) {

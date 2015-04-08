@@ -11,7 +11,7 @@ library(stringdist)
 
 set.seed(123)
 corpuses <- c("news", "twitter", "blogs")
-samplesize <- 100
+samplesize <- 1000
 accu_mat <- expand.grid(corpuses,corpuses)
 names(accu_mat) <- c("TestCorpus", "TrainCorpus")
 accu_mat$accu1 <- c(0)
@@ -29,9 +29,9 @@ TrainCorpus <- "news"
 #k = 0.0
 
 #performs better for the first two words than when k = 0.60
-#k = 0.25
-
-k = 0.15
+k = 0.25
+#0.15 is to0 low
+#k = 0.15
 
 system.time(
 for(i in 2:4){

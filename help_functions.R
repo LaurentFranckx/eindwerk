@@ -24,6 +24,10 @@ LoadNgram <- function(txttoanalyse, ngram, req_freq){
 }
 
 SplitAndMargeNGr <- function(tokendngr, ngram){
+  if(nrow(tokendngr) == 0) {
+     warning("Empty tokendngr for ", ngram)
+     return(tokendngr)
+  }
   tokendngr_split <- stri_split_boundaries(tokendngr[, ngram], simplify = TRUE)   
   if(ngram == "FiveGr"){
     first <- paste(tokendngr_split[, 1], tokendngr_split[, 2], tokendngr_split[, 3], tokendngr_split[, 4], sep ="") 
@@ -49,7 +53,10 @@ SplitAndMargeNGr <- function(tokendngr, ngram){
 }
   
 MarkovChain <- function(tokendngr_split_merged, ngram){    
- 
+  if(nrow(tokendngr_split_merged) == 0){
+    warning("Empty tokendngr for ", ngram)
+    return(tokendngr_split_merged)
+  }
   df_to_aggr <- tokendngr_split_merged[  , c("freq")]
   
   #### sum the number of times the first two terms occur together
@@ -142,7 +149,6 @@ TokenizeMarkov <- function(input_txt, ngram, req_freq, samplesize = length(textt
   rm(tokenized)
   gc()
   
-  browser()
   
   freqmat <- paste(input_txt,"Tokened", ngram, "Gr_uniq.txt",sep= "")  
   system(paste("sort < ", matrixname,  " | uniq -c > ", freqmat,  sep = " "))
