@@ -32,25 +32,111 @@ load(file = "data/corpuslist.RData")
 # Define server logic required to draw a histogram
 shinyServer(
   function(input, output, session) {
+#     values <- reactiveValues()
+#     values$predictions  <- SearchWrapper("", input$corpus, corpuslist)
+    
+#    predictions <- paste("Enter a space to get a suggestion for a next word.")
+    
+    
+    predictions <- reactive({
+    #observe({
+ #     searchstring <- input$searchstring
+      if(grepl("[[:space:]]+$", input$searchstring)){
+  #    if(input$newsearch){
+        searchstring <- gsub("[[:space:]]+$", " ", input$searchstring)
+        predictions <- SearchWrapper(searchstring, input$corpus, corpuslist)
+#       }
+        # selectInput("result", "Choose the next word", result)
+        # checkboxGroupInput("result", "Choose the next word", result)
+#        result[[1]] 
+       } else {
+        # predictions <- "Enter a space to get a suggestion for a next word."
+         predictions <- ""
+       }
+    
+      
+    })
+     
   #probably will need renderTable
-#   output$text1 <- renderText({ 
-     output$text1 <- renderUI({  
+   output$text1 <- renderText({ 
+#     output$text1 <- renderUI({  
 #   output$text1 <- renderTable({ 
 #     dataInput <- reactive({
 #       getSymbols(input$searchstring, input$corpus)
 #     })
 #     result <-       SearchStrCorpus(dataInput(), corpuslist)
      #or use length(strsplit(str1, split = " ")[[1]]) -1 to find number of blanks
-    if(grepl("[[:space:]]+$", input$searchstring)){
-      searchstring <- gsub("[[:space:]]+$", " ", input$searchstring)
-      result <-       SearchWrapper(searchstring, input$corpus, corpuslist)
-      selectInput("result", "Choose the next word", result)
-    } else {
-      paste("Enter a space to get a suggestion for a next word.")
-    }
+#     if(grepl("[[:space:]]+$", input$searchstring)){
+#       searchstring <- gsub("[[:space:]]+$", " ", input$searchstring)
+#       result <-       SearchWrapper(searchstring, input$corpus, corpuslist)
+     # selectInput("result", "Choose the next word", result)
+     # checkboxGroupInput("result", "Choose the next word", result)
+     predictions()[[1]]
+     #predictions
+#     } else {
+#       paste("Enter a space to get a suggestion for a next word.")
+#     }
 #    paste("You want complete ",input$searchstring, "based on ", input$corpus)
   })
 
+output$text2 <- renderText({ 
+  if (length(predictions()) > 1) {
+    results <- predictions()[[2]]
+  } else {
+    results <- NULL
+  }
+  
+  results 
+})
+
+output$text3 <- renderText({ 
+  if (length(predictions()) > 2) {
+    results <- predictions()[[3]]
+  } else {
+    results <- NULL
+  }
+   
+  results
+})
+
+
+observe({
+  x <- input$action
+  updateTextInput(session, "searchstring", value = "")
+    
+  })
+
+observe({
+   if(input$pred1 == 0)   return()      
+ #  } else {
+#   #  y <- predictions()
+  #  y <- predictions()
+  #  prediction <- reactive("")
+ #   y <- input$pred1
+    firstval <- isolate(input$searchstring)
+#      newsearch <- input$newsearch
+#     if (newsearch) {
+      isolate(updateTextInput(session, "searchstring", value = paste(firstval, predictions()[[1]], " ")))
+    #  isolate(updateTextInput(session, "searchstring", value = paste(firstval, input$pred1)))
+
+#       newsearch <- FALSE
+#    }
+#   
+   
+})
+
+
+observe({
+  if(input$pred2 == 0)   return()      
+  firstval <- isolate(input$searchstring)
+  isolate(updateTextInput(session, "searchstring", value = paste(firstval, predictions()[[2]], " ")))
+})
+
+observe({
+  if(input$pred3 == 0)   return()      
+  firstval <- isolate(input$searchstring)
+  isolate(updateTextInput(session, "searchstring", value = paste(firstval, predictions()[[3]], " ")))
+})
 
 
   }

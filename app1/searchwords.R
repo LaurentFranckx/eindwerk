@@ -4,7 +4,7 @@
 
 # see "Interpolation" page on Stanfor NLP
 
-SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.25, maxlength = 3){
+SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.7, maxlength = 3){
     rawresult <- SearchStrCorpus(searchstring, corpus, corpuslist, maxlength)
 #   if(length(result) == 0) result[c(1,2,3)] <- c("a ", "and ", "I ")
 #   if(length(result) == 1) result[c(2,3)] <- c("a ", "and ")
@@ -16,7 +16,7 @@ SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.25, maxl
     result$weight_prob <- with(result, Bayes_prob * (1 - distance))
     result$weight_bo <- with(result, weight_prob * (1-decrease)^(maxn-n))
     if(nrow(result) == 0){
-      final_res <- c(NA,NA,NA)
+      final_res <- c("a","and","I")
     #  return(character(0))
     } else {
       final_res <- aggregate(result$weight_bo, by = list(result$predword), FUN = sum)
@@ -24,6 +24,8 @@ SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.25, maxl
       final_res <- final_res[order(final_res$x, decreasing = TRUE),]
       final_res <- final_res[1:3, 1]
       final_res <- as.character(final_res)   
+      final_res[is.na(final_res)] <- c("a")
+      
     }
 return(final_res)
 #  return(list(rawresult,result,final_res))

@@ -17,28 +17,31 @@ sidebarLayout(
               Also note that, although the app suggests the next word, you still need to fill in the next word manually in the 
               input field. 
               "),
+        fluidRow(
           radioButtons("corpus", 
-                              label = h3("Preferred corpus"), 
-                              choices = list("twitter" = "twitter", 
-                                             "news" = "news", "blogs" = "blogs"),
-                              selected = "twitter"),
- 
- 
-           textInput("searchstring", label = h3("Text input"), 
-                     value = "Enter text..."),
+                       label = h3("Preferred corpus"), 
+                       choices = list("twitter" = "twitter", 
+                                      "news" = "news", "blogs" = "blogs"),
+                       selected = "twitter")
+          ),
+        fluidRow(actionButton("action", label = "Reset input text")),
+#                 actionButton("newsearch", label = "Search next word"))  ,
+        fluidRow(textInput("searchstring", label = h3("Text input"), value = "Enter text...")) ,
         
-        width = 10
- ) ,  
-
+#        checkboxGroupInput("outputval", "Chosen output", choices = outval),
+        
+#         textInput("chosen_out", label = h3("Chosen output"), 
+#                   value = uiOutput("text1")),
+fluidRow( actionButton(inputId = "pred1",  label = textOutput("text1"), icon = NULL) )   ,
+fluidRow( actionButton(inputId = "pred2",  label = textOutput("text2"), icon = NULL))   ,
+fluidRow( actionButton(inputId = "pred3",  label = textOutput("text3"), icon = NULL))   ,
+width = 10
+),
 
 mainPanel(
-#   uiOutput("debugTools"),
-#   textOutput("text1")
-  
-  uiOutput("text1")
-  
 )
 
-)
 
+)
 ))
+
