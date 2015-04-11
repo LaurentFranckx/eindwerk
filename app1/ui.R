@@ -1,15 +1,20 @@
 library(shiny)
 
-shinyUI(fluidPage(
-  tags$head(tags$style(
-    type="text/css",
-    "#text {width: 100%}
-    .btn {
-    display:inline-block;
-    width: 100%;
+style <-   "
+
+.form-group.shiny-input-container {
+      width: 100%
     }
-    "
-  )),
+
+#searchstring {
+      width: 100%
+    }
+"
+    
+
+  
+shinyUI(fluidPage(  
+tags$head(tags$style(type="text/css", style)),
 fluidRow(column(12,titlePanel("Next word prediction"))),
 fluidRow(column(12,h3("Some guidance"))),
 fluidRow(column(12,
@@ -29,7 +34,7 @@ fluidRow(column(12,
               "))),
 fluidRow(column(6,
           radioButtons("corpus", 
-                       label = h3("Preferred corpus"), 
+                       label = h3("Chosen text style"), 
                        choices = list("twitter" = "twitter", 
                                       "news" = "news", "blogs" = "blogs"),
                        selected = "twitter")

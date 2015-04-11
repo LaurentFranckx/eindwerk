@@ -108,34 +108,21 @@ observe({
 
 observe({
    if(input$pred1 == 0)   return()      
- #  } else {
-#   #  y <- predictions()
-  #  y <- predictions()
-  #  prediction <- reactive("")
- #   y <- input$pred1
     firstval <- isolate(input$searchstring)
-#      newsearch <- input$newsearch
-#     if (newsearch) {
-      isolate(updateTextInput(session, "searchstring", value = paste(firstval, predictions()[[1]], "", sep = " ")))
-    #  isolate(updateTextInput(session, "searchstring", value = paste(firstval, input$pred1)))
-
-#       newsearch <- FALSE
-#    }
-#   
-   
+      isolate(updateTextInput(session, "searchstring", value = paste(firstval, predictions()[[1]], " ", sep = "")))
 })
 
 
 observe({
   if(input$pred2 == 0)   return()      
   firstval <- isolate(input$searchstring)
-  isolate(updateTextInput(session, "searchstring", value = paste(firstval, predictions()[[2]], "", sep = " ")))
+  isolate(updateTextInput(session, "searchstring", value = paste(firstval, predictions()[[2]], " ", sep = "")))
 })
 
 observe({
   if(input$pred3 == 0)   return()      
   firstval <- isolate(input$searchstring)
-  isolate(updateTextInput(session, "searchstring", value = paste(firstval, predictions()[[3]],"", sep = " ")))
+  isolate(updateTextInput(session, "searchstring", value = paste(firstval, predictions()[[3]]," ", sep = "")))
 })
 
 
