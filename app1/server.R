@@ -44,7 +44,8 @@ shinyServer(
       if(grepl("[[:space:]]+$", input$searchstring)){
   #    if(input$newsearch){
         searchstring <- gsub("[[:space:]]+$", " ", input$searchstring)
-        predictions <- SearchWrapper(searchstring, input$corpus, corpuslist)
+        if (input$threewords) k <- 0.5 else k <- 1
+        predictions <- SearchWrapper(searchstring, input$corpus, corpuslist, decrease = k)
 #       }
         # selectInput("result", "Choose the next word", result)
         # checkboxGroupInput("result", "Choose the next word", result)
@@ -80,7 +81,7 @@ shinyServer(
   })
 
 output$text2 <- renderText({ 
-  if (length(predictions()) > 1) {
+  if (length(predictions()) > 1 & input$threewords) {
     results <- predictions()[[2]]
   } else {
     results <- NULL
@@ -90,7 +91,7 @@ output$text2 <- renderText({
 })
 
 output$text3 <- renderText({ 
-  if (length(predictions()) > 2) {
+  if (length(predictions()) > 2 & input$threewords) {
     results <- predictions()[[3]]
   } else {
     results <- NULL
