@@ -4,7 +4,7 @@
 
 # see "Interpolation" page on Stanfor NLP
 
-SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.7, maxlength = 3){
+SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.7, maxlength = 4){
     rawresult <- SearchStrCorpus(searchstring, corpus, corpuslist, maxlength)
 #   if(length(result) == 0) result[c(1,2,3)] <- c("a ", "and ", "I ")
 #   if(length(result) == 1) result[c(2,3)] <- c("a ", "and ")

@@ -42,12 +42,14 @@ fluidRow(column(12,
              The app has been optimised for predictions based on the three most recent words you have typed."
              )),
 
+
 fluidRow(column(12,         
               "You can empty the input field by clicking one 'Reset input text' at any time. 
               ")),
 
 fluidRow(column(12,
-                helpText("In case of network or other performance problems, please contact me at franckx.laurent@gmail.com . 
+                helpText("It is possible that, at some stage, your screen will turn grey and stop reacting. Reloading the page should solve the problem.
+If the problems persists,  or if you encounter any other performance problems, please contact me at franckx.laurent@gmail.com . 
               "))),
 
 fluidRow(column(6,
