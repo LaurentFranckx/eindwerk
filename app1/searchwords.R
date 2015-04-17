@@ -12,19 +12,21 @@ SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.7, maxle
     result <- rawresult[complete.cases(rawresult),]
 
     result <- as.data.frame(result)
-    maxn <- max(result$n)
-    result$weight_prob <- with(result, Bayes_prob * (1 - distance))
-    result$weight_bo <- with(result, weight_prob * (1-decrease)^(maxn-n))
+    most_common <- c("a","and","I")
     if(nrow(result) == 0){
-      final_res <- c("a","and","I")
+      final_res <- most_common 
     #  return(character(0))
     } else {
+      maxn <- max(result$n)
+      result$weight_prob <- with(result, Bayes_prob * (1 - distance))
+      result$weight_bo <- with(result, weight_prob * (1-decrease)^(maxn-n))
       final_res <- aggregate(result$weight_bo, by = list(result$predword), FUN = sum)
       
       final_res <- final_res[order(final_res$x, decreasing = TRUE),]
       final_res <- final_res[1:3, 1]
-      final_res <- as.character(final_res)   
-      final_res[is.na(final_res)] <- c("a")
+      final_res <- as.character(final_res)  
+      count_na <- sum(is.na(final_res))
+      final_res[is.na(final_res)] <- sample(most_common,count_na)
       
     }
 return(final_res)

@@ -44,15 +44,22 @@ shinyServer(
       if(grepl("[[:space:]]+$", input$searchstring)){
   #    if(input$newsearch){
         searchstring <- gsub("[[:space:]]+$", " ", input$searchstring)
-        if (input$threewords) k <- 0.5 else k <- 1
+        if (input$corpus == "news") {
+           k <- 0.4
+        } else if (input$corpus == "blogs") {
+           k <- 0 
+        } else {
+          k <- 0.2
+        }
+        
         predictions <- SearchWrapper(searchstring, input$corpus, corpuslist, decrease = k)
-#       }
+   #    }
         # selectInput("result", "Choose the next word", result)
         # checkboxGroupInput("result", "Choose the next word", result)
 #        result[[1]] 
        } else {
-        # predictions <- "Enter a space to get a suggestion for a next word."
-         predictions <- ""
+         #predictions <- "Enter a space to get a suggestion for a next word."
+         predictions <- " "
        }
     
       
@@ -102,20 +109,21 @@ output$text3 <- renderText({
 
 
 observe({
+  if(input$action == 0)   return()  
   x <- input$action
-  updateTextInput(session, "searchstring", value = "")
+  isolate(updateTextInput(session, "searchstring", value = ""))
     
   })
 
 observe({
-   if(input$pred1 == 0)   return()      
+  if(input$pred1 == 0)   return()      
     firstval <- isolate(input$searchstring)
       isolate(updateTextInput(session, "searchstring", value = paste(firstval, predictions()[[1]], " ", sep = "")))
 })
 
 
 observe({
-  if(input$pred2 == 0)   return()      
+ if(input$pred2 == 0)   return()      
   firstval <- isolate(input$searchstring)
   isolate(updateTextInput(session, "searchstring", value = paste(firstval, predictions()[[2]], " ", sep = "")))
 })

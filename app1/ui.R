@@ -19,13 +19,18 @@ fluidRow(column(12,titlePanel("Next word prediction"))),
 fluidRow(column(12,h3("Some guidance"))),
 fluidRow(column(12,
         helpText("This is a prototype app for 'next word' prediction. 
-        In order to run a test, first select the type of text you are writing (tweet, news article, blog).
-              Then start writing your sentence - the app will start searching for the best
-              prediction of the next word as soon as you hit the 'space' button. 
-              Beneath the current panel, you will get a suggestion for the next word.
+        In order to run a test, first select the type of text you are writing (tweet, news article, blog) - the app has been optimized for each type of text.
+              "))),
+fluidRow(column(12,
+        helpText("Then start writing your sentence."))),
+fluidRow(column(12, strong("The app will start searching for the best
+              prediction of the next word as soon as you hit the 'space' button.")  
+              )),
+fluidRow(column(12,
+              "Beneath the current panel, you will get a suggestion for the next word.
               If you click on this word, it will automatically be added to your sentence.
               If this is not the word you intended to write next, keep on typing in the input field.
-              "))),
+              ")),
 fluidRow(column(12,
                 helpText("Note that you can overrule the default setting of 'single' word prediction by clicking 
                 in the checkbox 'Give three word suggestions'.
@@ -39,7 +44,7 @@ fluidRow(column(12,
              "Please note that, if you add a new word to your sentence before the suggestions appear, 
               the app will relaunch its search based on your most recent input, and this may cause a sligthly longer 
                execution time. 
-             The app has been optimised for predictions based on the three most recent words you have typed."
+             The app has been optimised for predictions based on the four most recent words you have typed."
              )),
 
 
@@ -62,7 +67,9 @@ fluidRow(column(6,
 fluidRow(column(6,checkboxInput("threewords", label = "Give three word suggestions", value = FALSE))),
 fluidRow(column(3,actionButton("action", label = "Reset input text"))),
 
-fluidRow(column(12, textInput("searchstring", label = h3("Text input"), value = "Enter text..."))) ,        
+fluidRow(column(12, textInput("searchstring", label = h3("Text input"), 
+                              value = "Enter text..."
+                              ))) ,        
 fluidRow(column(3, actionButton(inputId = "pred1",  label = textOutput("text1"), icon = NULL) )  ) , 
 fluidRow(column(3, actionButton(inputId = "pred2",  label = textOutput("text2"), icon = NULL)) )  ,
 fluidRow( column(3,actionButton(inputId = "pred3",  label = textOutput("text3"), icon = NULL)) )   
