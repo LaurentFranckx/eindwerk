@@ -1,7 +1,7 @@
 #setwd("D:/coursera/dsc_capstone")
 setwd("D:/coursera/caps_res")
 
-corpusnames <- c("news","twitter","blogs")
+corpusnames <- c("twitter","BlogsNews")
 #strgtgth <- 3
 
 
@@ -10,7 +10,7 @@ CreateCorpusList <- function(corpusnames, strglthlist){
   for(corpus in corpusnames){
     for(strgtgth in strglthlist){
       load(paste("US.", corpus, strgtgth +1, "Markov.RData" , sep= ""))
-      if(strgtgth <4 ){
+      if(strgtgth <4 & corpus == "twitter"){
         name_df <- paste("US.",corpus, strgtgth +1, "Markov", sep ="" )
        } else {
          name_df <- paste(corpus, strgtgth +1, "Markov", sep ="" )
@@ -74,7 +74,7 @@ corpuslist <- CreateCorpusList(corpusnames, 1:4)
 
 
 #save(corpuslist, file = "D:/coursera/dsc_capstone/app1/data/corpuslist.RData")
-save(corpuslist, file = "D:/coursera/dsc_capstone/app2/data/corpuslist.RData")
+save(corpuslist, file = "D:/coursera/dsc_capstone/app3/data/corpuslistwithBlogsNews.RData")
 
 
 

@@ -1,18 +1,26 @@
 library(tm)
 library(stringr)
 load(file = "cap_ston_corp_cl.RData")
-load(file = "app1/data/corpuslist.RData")
+#load(file = "app1/data/corpuslist.RData")
+load(file = "app2/data/corpuslist.RData")
+
 source("searchwordstest.R")
 source("n_gram_tokenizer.R")
 source("help_functions.R")
-source("app1/searchwords.R")
+#source("app1/searchwords.R")
+source("app2/searchwordsBlogsNews.R")
+
 
 library(stringdist)
 
 set.seed(123)
-corpuses <- c("news", "twitter", "blogs")
-samplesize <- 50
-accu_mat <- expand.grid(corpuses,corpuses, 3:4, seq(0.0,1.0,by=0.2))
+ngramscope <- 4:5
+kscope <- seq(0.0,1.0,by=0.2)
+#corpuses <- c("news", "twitter", "blogs")
+corpuses <- c("twitter", "BlogsNews")
+
+samplesize <- 5
+accu_mat <- expand.grid(corpuses,corpuses, ngramscope, kscope)
 names(accu_mat) <- c("TestCorpus", "TrainCorpus", "i", "k")
 accu_mat <- accu_mat[accu_mat$TestCorpus   != accu_mat$TrainCorpus  , ]
 accu_mat$accu1 <- c(0)
@@ -39,7 +47,7 @@ list_of_means <- list()
 system.time(
  # for(k in seq(0.1,0.7, by = 0.1)){
  #testing for lower n-gram does not really make sense     
-    for(i in 4:5){
+    for(i in ngramscope){
       #for(i in 5){   
       cat("started for i = ", i , "\n")
       
@@ -47,11 +55,11 @@ system.time(
       #    cat("started for k = ", k , "\n")
       for(TestCorpus in corpuses){
         resdir <- "D:/coursera/caps_res/"
-        if(i < 5){
-          DfToSample <- read.table(paste(resdir, "US.",TestCorpus,"Tokened", i,"Gr_uniq.txt",sep=""), stringsAsFactors = FALSE)
-        } else {
-          DfToSample <- read.table(paste(resdir, TestCorpus,"Tokened", i,"Gr_uniq.txt",sep=""), stringsAsFactors = FALSE)
-        }
+#         if(i < 5){
+#           DfToSample <- read.table(paste(resdir, "US.",TestCorpus,"Tokened", i,"Gr_uniq.txt",sep=""), stringsAsFactors = FALSE)
+#         } else {
+           DfToSample <- read.table(paste(resdir, TestCorpus,"Tokened", i,"Gr_uniq.txt",sep=""), stringsAsFactors = FALSE)
+#        }
         
         cat("Started with test set", TestCorpus, ".\n")
         
@@ -74,7 +82,7 @@ system.time(
         TextToTest <- t(rbind(TextToTest,tesstring_vec))  
         colnames(TextToTest) <- c("TextToTest", "first","V3")
         TextToTest <- as.data.frame(TextToTest)
-        for(k in seq(0.0,1.0,by=0.2)){
+        for(k in kscope){
           
         for(TrainCorpus in setdiff(corpuses,TestCorpus)){
           cat("Started with training set", TrainCorpus, ".\n")
@@ -127,8 +135,74 @@ system.time(
 #name_accumat <- paste("accum_mat_",i, "gr_amatch", "k", k, sep="")
 name_accumat <- "accuracy_test"
 assign(name_accumat, accu_mat)
-save(accu_mat, file = paste(name_accumat, "RData", sep="."))
+#save(accu_mat, file = paste(name_accumat, "RData", sep="."))
 
+# resutsmodeltesti5 <- read.csv("resutsmodeltesti5.csv")
+# 
+# results_twitter <- resutsmodeltesti5[resutsmodeltesti5$TrainCorpus== "twitter", ]
+# results_blogs <- resutsmodeltesti5[resutsmodeltesti5$TrainCorpus== "blogs", ]
+# results_news <- resutsmodeltesti5[resutsmodeltesti5$TrainCorpus== "news", ]
+
+load(file = paste(name_accumat, "RData", sep="."))
+
+accu_mat_twitter <- accu_mat[accu_mat$TrainCorpus== "twitter"&  accu_mat$i ==5, ]
+accu_mat_news <- accu_mat[accu_mat$TrainCorpus== "news"&  accu_mat$i ==5, ]
+accu_mat_blogs <- accu_mat[accu_mat$TrainCorpus== "blogs"&  accu_mat$i ==5, ]
+
+library(ggplot2)
+
+plot_train_test <- function(train_df, test){
+  id_vars <- c("k","TestCorpus")
+  meas_vars <- c("accu1","accu2","accu3")
+  accu_mat <- train_df[train_df$TestCorpus == test,  ]
+  accu_mat_twitter_plot <- accu_mat[ , c(id_vars,"accu1")]
+  accu_mat_twitter_plot$words <- c(1)
+  names(accu_mat_twitter_plot) <- gsub("accu1","Accuracy",names(accu_mat_twitter_plot))
+  accu_mat_twitter_plot2 <- accu_mat[ , c(id_vars, "accu2")]
+  accu_mat_twitter_plot2$words <- c(2)
+  names(accu_mat_twitter_plot2) <- gsub("accu2","Accuracy",names(accu_mat_twitter_plot2))
+  accu_mat_twitter_plot3 <- accu_mat[ , c(id_vars,"accu3")]
+  accu_mat_twitter_plot3$words <- c(3)
+  names(accu_mat_twitter_plot3) <- gsub("accu3","Accuracy",names(accu_mat_twitter_plot3))
+  
+  accu_mat_twitter_plot_new <- rbind(accu_mat_twitter_plot, accu_mat_twitter_plot2)
+  accu_mat_twitter_plot_new <- rbind(accu_mat_twitter_plot_new, accu_mat_twitter_plot3)
+  names(accu_mat_twitter_plot_new) <- gsub("k","Discount_factor",names(accu_mat_twitter_plot_new))
+  
+  accu_mat_twitter_plot_new$words <- as.factor(accu_mat_twitter_plot_new$words)
+  names(accu_mat_twitter_plot_new) <- gsub("words","suggested_words",names(accu_mat_twitter_plot_new))
+  return(accu_mat_twitter_plot_new)
+  #ggplot(accu_mat_twitter_plot_new, aes(Discount_factor, Accuracy, colour = suggested_words)) + geom_point() + facet_grid(.  ~ TestCorpus)
+  #ggplot(accu_mat_twitter_plot_new, aes(Discount_factor, Accuracy, colour = suggested_words)) + geom_point() 
+  
+}
+
+twitplot <- plot_train_test(accu_mat_twitter, "blogs")
+twitplot$TrainCorpus <- "twitter"
+newsplot <- plot_train_test(accu_mat_news, "blogs")
+newsplot$TrainCorpus <- "news"
+blogplot <- plot_train_test(accu_mat_blogs, "news")
+blogplot$TrainCorpus <- "blogs"
+
+toplot <- rbind(twitplot,blogplot)
+toplot <- rbind(toplot,newsplot)
+ggplot(toplot, aes(Discount_factor, Accuracy, colour = suggested_words)) + geom_point() + facet_grid(.  ~ TrainCorpus)
+
+
+
+# library(grid)
+# grid.newpage()
+# pushViewport(viewport(layout = grid.layout(1, 3)))
+# vplayout <- function(x, y)
+#   viewport(layout.pos.row = x, layout.pos.col = y)
+# print(twitplot, vp = vplayout(1, 1))
+# print(blogplot, vp = vplayout(1, 2))
+# print(newsplot, vp = vplayout(1, 3))
+
+
+#for twitter: highest accuracy with k = 0.20 and use "blogs"
+#for news: highest accuracy with k = 0.40 and use "blogs"
+# for blogs: k does not matter, use "news"
 
 
 #df_of_means3 <- do.call("rbind", list_of_means)

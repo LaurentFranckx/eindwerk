@@ -165,3 +165,93 @@ TokenizeMarkov <- function(input_txt, ngram, req_freq, samplesize = length(textt
   save(list = name_markov, file = filename)
   cat("Markov matrix finalised for ", ngram, "n-gram and ", input_txt, ". \n")  
 }
+
+TokenizeMarkovWholeCorp <- function(ngram, req_freq, samplesize = length(texttotoken), create_token = FALSE) {
+  cat("Markov matrix started for ", ngram, "n-gram . \n") 
+  if(ngram == 5){
+    ngram_sym <-"FiveGr"   
+  } else if(ngram == 4){
+    ngram_sym <-"FourGr"   
+  } else if(ngram == 3)  {
+    ngram_sym <-"ThreeGr"   
+  }  else if (ngram == 2)  {
+    ngram_sym  <- "TwoGr"  
+  } else {
+    stop("Unkown n-gram",  ngram, ".\n")    
+  }
+  
+  news_txt <- "en_US.news.txt"
+  texttotokennews <- PlainTextDocument(cap_ston_corp_cl[[news_txt]]$content)[[1]]
+  
+  blogs_txt <- "en_US.blogs.txt"
+  texttotokenblogs <- PlainTextDocument(cap_ston_corp_cl[[blogs_txt]]$content)[[1]]
+  
+  twit_txt <- "en_US.twitter.txt"
+  texttotokentwit <- PlainTextDocument(cap_ston_corp_cl[[twit_txt]]$content)[[1]]
+  
+  texttotoken <- c(texttotokennews,texttotokenblogs)
+  texttotoken <- c(texttotoken,texttotokentwit)
+  
+  set.seed(123) 
+  cat("Length of text to token is: ", length(texttotoken) , ". \n") 
+  cat("Sample size is: ", samplesize, ". \n")
+  sample <- sample( length(texttotoken), samplesize)
+  texttotoken_sample <- texttotoken[ sample ]
+  
+  tokenizer <- ngram_tokenizer(ngram)
+  if(create_token == TRUE){
+    tokenized <- tokenizer(texttotoken_sample)
+  }
+  cat("Tokenization finalised for ", ngram, "n-gram. \n")
+  
+  matrixname <- paste("BlogsNewsTwitTokened", ngram, "Gr.txt", sep = "")
+  write.table(as.matrix(tokenized), row.names = FALSE, col.names = FALSE, file = matrixname)
+  rm(texttotoken)
+  rm(texttotoken_sample)
+  rm(tokenized)
+  gc()
+  
+  
+  freqmat <- paste("BlogsNewsTwitTokened", ngram, "Gr_uniq.txt",sep= "")  
+  system(paste("sort < ", matrixname,  " | uniq -c > ", freqmat,  sep = " "))
+  #sort < BlogsNewsTokened4Gr.txt | uniq -c > BlogsNewsTokened4Gr_uniq.txt
+  
+  TokenedGrUn <- LoadNgram("BlogsNewsTwit",ngram_sym, req_freq)
+  GrSplitMg <- SplitAndMargeNGr(TokenedGrUn[[2]],ngram_sym)
+  rm(TokenedGrUn)
+  gc()
+  
+  name_markov <- paste("BlogsNewsTwit",ngram, "Markov", sep="")
+  assign(name_markov, MarkovChain(GrSplitMg,ngram_sym))
+  filename <- paste(name_markov,"RData", sep= ".")
+  save(list = name_markov, file = filename)
+  cat("Markov matrix finalised for ", ngram, "n-gram . \n")  
+}
+
+FinalTokenizeMarkovWholeCorp <- function(ngram, req_freq, samplesize = length(texttotoken), create_token = FALSE) {
+  cat("Markov matrix started for ", ngram, "n-gram . \n") 
+  if(ngram == 5){
+    ngram_sym <-"FiveGr"   
+  } else if(ngram == 4){
+    ngram_sym <-"FourGr"   
+  } else if(ngram == 3)  {
+    ngram_sym <-"ThreeGr"   
+  }  else if (ngram == 2)  {
+    ngram_sym  <- "TwoGr"  
+  } else {
+    stop("Unkown n-gram",  ngram, ".\n")    
+  }
+  
+
+
+  TokenedGrUn <- LoadNgram("BlogsNewsTwit",ngram_sym, req_freq)
+  GrSplitMg <- SplitAndMargeNGr(TokenedGrUn[[2]],ngram_sym)
+  rm(TokenedGrUn)
+  gc()
+  
+  name_markov <- paste("BlogsNewsTwit",ngram, "Markov", sep="")
+  assign(name_markov, MarkovChain(GrSplitMg,ngram_sym))
+  filename <- paste(name_markov,"RData", sep= ".")
+  save(list = name_markov, file = filename)
+  cat("Markov matrix finalised for ", ngram, "n-gram . \n")  
+}
