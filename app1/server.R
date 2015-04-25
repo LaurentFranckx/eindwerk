@@ -45,14 +45,16 @@ shinyServer(
   #    if(input$newsearch){
         searchstring <- gsub("[[:space:]]+$", " ", input$searchstring)
         if (input$corpus == "news") {
-           k <- 0.4
+           k <- 0
         } else if (input$corpus == "blogs") {
            k <- 0 
         } else {
-          k <- 0.2
+          k <- 0
         }
         
-        predictions <- SearchWrapper(searchstring, input$corpus, corpuslist, decrease = k)
+        predictions <- SearchWrapper(searchstring, input$corpus, 
+                                     corpuslist, 
+                                     decrease = k)
    #    }
         # selectInput("result", "Choose the next word", result)
         # checkboxGroupInput("result", "Choose the next word", result)

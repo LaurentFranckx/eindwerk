@@ -49,7 +49,7 @@ fluidRow(column(12,
 
 
 fluidRow(column(12,         
-              "You can empty the input field by clicking one 'Reset input text' at any time. 
+              "You can empty the input field by clicking on 'Reset input text' at any time. 
               ")),
 
 fluidRow(column(12,
@@ -68,7 +68,7 @@ fluidRow(column(6,checkboxInput("threewords", label = "Give three word suggestio
 fluidRow(column(3,actionButton("action", label = "Reset input text"))),
 
 fluidRow(column(12, textInput("searchstring", label = h3("Text input"), 
-                              value = "Enter text..."
+                              value = " "
                               ))) ,        
 fluidRow(column(3, actionButton(inputId = "pred1",  label = textOutput("text1"), icon = NULL) )  ) , 
 fluidRow(column(3, actionButton(inputId = "pred2",  label = textOutput("text2"), icon = NULL)) )  ,

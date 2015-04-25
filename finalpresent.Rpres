@@ -12,25 +12,28 @@ Central objectives and constraints:
 
 
 - Generate "next" word prediction for English sentence with 3 datasets: Twitter, news articles and blogs
-- Differences between 3 datasets requires separate analysis 
-- Underlying prediction algorithm should be accurate 
-- Keep data size for on-line implementation within Shiny limits
+- Underlying prediction algorithm should be precise 
+- Keep data size for app within Shiny limits
 - Quick response to user input: prediction within 1 sec
-- Correct for user spelling mistakes with approximate matching 
+- Compensate for user spelling mistakes with approximate matching 
 - Default:  single word prediction but user can ask  3-word prediction
 
 
 Data: sources and approach 
 ========================================================
 
+<small>
 
 - Stopwords are integral part of content: keep them 
 - No stemming: users want complete word, not its stem
-- Eliminate words and low order n-grams with low count (less than 4 occurences):   improves speed and reduces memory use  without decreasing accuracy 
-- Algorithm optimised for 4-grams, but also uses prediction based on 3, 2- and 1-grams: backoff  with 'discounting' (see next slide)
+- Eliminate words and n-grams with low count (less than 4 occurrences):   
+  - improves speed and reduces memory use  
+  - eliminates  'noise' and does not affect overall precision 
+- Algorithm optimized for 4-grams, but also uses prediction based on 3, 2- and 1-grams: back-off  with 'discounting' (see next slide)
+- Differences between 3 datasets requires separate analysis - merging "blogs" and "news" leads to marginal improvements in precision but is slower 
 - Link to app and user guidance:
 
-https://lfranckx.shinyapps.io/CapVersion2/ 
+https://lfranckx.shinyapps.io/Cap4/
 
 
 
@@ -47,15 +50,16 @@ Description of algorithm
 
 
 
-Average accuracy in validation sets
+Average precision in validation sets
 ========================================================
 
-```{r, echo=FALSE, fig.width=6,fig.height=3,dpi=300,out.width="1920px",height="1080px"}
+```{r, echo=FALSE, fig.width=7.5,fig.height=3.5,dpi=300,out.width="1920px",height="1080px"}
 library(ggplot2)
 library(plyr)
 library(reshape)
 #load("D:/coursera/dsc_capstone/mean_accuracy.RData")
-name_accumat <- "accuracy_test"
+#name_accumat <- "accuracy_test"
+name_accumat <- "accuracy_test_new"
 load(file = paste(name_accumat, "RData", sep="."))
 
 accu_mat_twitter <- accu_mat[accu_mat$TrainCorpus== "twitter"&  accu_mat$i ==5, ]
@@ -70,13 +74,13 @@ plot_train_test <- function(train_df, test){
   accu_mat <- train_df[train_df$TestCorpus == test,  ]
   accu_mat_twitter_plot <- accu_mat[ , c(id_vars,"accu1")]
   accu_mat_twitter_plot$words <- c(1)
-  names(accu_mat_twitter_plot) <- gsub("accu1","Accuracy",names(accu_mat_twitter_plot))
+  names(accu_mat_twitter_plot) <- gsub("accu1","precision",names(accu_mat_twitter_plot))
   accu_mat_twitter_plot2 <- accu_mat[ , c(id_vars, "accu2")]
   accu_mat_twitter_plot2$words <- c(2)
-  names(accu_mat_twitter_plot2) <- gsub("accu2","Accuracy",names(accu_mat_twitter_plot2))
+  names(accu_mat_twitter_plot2) <- gsub("accu2","precision",names(accu_mat_twitter_plot2))
   accu_mat_twitter_plot3 <- accu_mat[ , c(id_vars,"accu3")]
   accu_mat_twitter_plot3$words <- c(3)
-  names(accu_mat_twitter_plot3) <- gsub("accu3","Accuracy",names(accu_mat_twitter_plot3))
+  names(accu_mat_twitter_plot3) <- gsub("accu3","precision",names(accu_mat_twitter_plot3))
   
   accu_mat_twitter_plot_new <- rbind(accu_mat_twitter_plot, accu_mat_twitter_plot2)
   accu_mat_twitter_plot_new <- rbind(accu_mat_twitter_plot_new, accu_mat_twitter_plot3)
@@ -85,8 +89,8 @@ plot_train_test <- function(train_df, test){
   accu_mat_twitter_plot_new$words <- as.factor(accu_mat_twitter_plot_new$words)
   names(accu_mat_twitter_plot_new) <- gsub("words","suggested_words",names(accu_mat_twitter_plot_new))
   return(accu_mat_twitter_plot_new)
-  #ggplot(accu_mat_twitter_plot_new, aes(Discount_factor, Accuracy, colour = suggested_words)) + geom_point() + facet_grid(.  ~ TestCorpus)
-  #ggplot(accu_mat_twitter_plot_new, aes(Discount_factor, Accuracy, colour = suggested_words)) + geom_point() 
+  #ggplot(accu_mat_twitter_plot_new, aes(Discount_factor, precision, colour = suggested_words)) + geom_point() + facet_grid(.  ~ TestCorpus)
+  #ggplot(accu_mat_twitter_plot_new, aes(Discount_factor, precision, colour = suggested_words)) + geom_point() 
   
 }
 
@@ -99,7 +103,13 @@ blogplot$TrainCorpus <- "blogs"
 
 toplot <- rbind(twitplot,blogplot)
 toplot <- rbind(toplot,newsplot)
-ggplot(toplot, aes(Discount_factor, Accuracy, colour = suggested_words)) + geom_point() + facet_grid(.  ~ TrainCorpus)
+
+fmt <- function(){
+    function(x) format(x,nsmall = 2,scientific = FALSE)
+}
+
+ggplot(toplot, aes(Discount_factor, precision, colour = suggested_words)) + geom_point() + facet_grid(.  ~ TrainCorpus) +  scale_x_continuous(breaks = seq(0,1,by =0.2))
+ #   scale_x_continuous(labels = fmt())
 
 
 
@@ -111,11 +121,19 @@ Interpretation: see next slide
 
 </small>
 
-Impact of discount factor on accuracy
+Determinants of  precision
 ========================================================
 
+<small>
 - Validation sets: for each dataset, random sample of 500 n grams from other dataset ("blogs" for "news" and "twitter", "news" for "blogs")
-- Validation accuracy of "blogs" independent of discount factor
-- for "news": discount factor of 0.4: likelihood of words predicted by (n-1) gram has 60% of the weight of likelihood of words predicted by n-gram 
-- for "twitter": discount factor of 0.2: likelihood of words predicted by (n-1) gram has 80% of the weight of likelihood of words predicted by n-gram 
-- thus, in Twitter, more weight is attached to "lower" n-grams than in "news" database 
+- Role of discount factor (*k*)
+ - except for "blogs", *k* does not matter for 1-word precision 
+ - impact of *k* on 2- or 3-word precision ambiguous and small 
+ - for "blogs": trade-off between 1- and 3- word precision
+ - overall, set *k* = 0: give same weight to likelihoods based on lower n-grams as for those based in higher n-grams
+- moving from 1 to 3 word suggestion has much larger impact on overall predictive value than varying *k*
+- With external test set (https://github.com/jan-san/dsci-benchmark): top-1 precision around 12 %, top-3 precision: 16 %
+
+
+
+</small>

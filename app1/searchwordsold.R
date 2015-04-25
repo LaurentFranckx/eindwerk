@@ -5,9 +5,7 @@
 # see "Interpolation" page on Stanfor NLP
 
 SearchWrapper <- function(searchstring, corpus, corpuslist, decrease =0.7, maxlength = 4){
-    rawresult <- SearchStrCorpus(searchstring, corpus, 
-                                  corpuslist, 
-                                 maxlength)
+    rawresult <- SearchStrCorpus(searchstring, corpus, corpuslist, maxlength)
 #   if(length(result) == 0) result[c(1,2,3)] <- c("a ", "and ", "I ")
 #   if(length(result) == 1) result[c(2,3)] <- c("a ", "and ")
 #   if(length(result) == 2) result[3] <- c("a ")
@@ -42,9 +40,7 @@ return(final_res)
 
 
 
-SearchStrCorpus <- function(searchstring, corpus, 
-                            corpuslist, 
-                            maxlength,  ML_est = character()){
+SearchStrCorpus <- function(searchstring, corpus, corpuslist, maxlength,  ML_est = character()){
   splitstring <- strsplit(searchstring, " ")[[1]]
   stringlenth <- length(splitstring)
   if (stringlenth == 0) return(c("n-gram"=0 , "predword"=0, "Bayes_prob"=0, "distance"=0, "n"=0))
@@ -56,15 +52,11 @@ SearchStrCorpus <- function(searchstring, corpus,
     for(i in 0: (maxlength -1 )) search_string <- paste(splitstring[stringlenth -i], search_string, sep=" ")
     stringlenth <- maxlength
   }
-  ML_est <- SearchClStrCorpus(search_string, stringlenth, corpus,
-                              corpuslist, 
-                              ML_est)
+  ML_est <- SearchClStrCorpus(search_string, stringlenth, corpus, corpuslist, ML_est)
 #  if(length(ML_est) < 3) {
     if(or_stringlenth > 2){
       search_string <- paste(splitstring[or_stringlenth -1], splitstring[or_stringlenth],  sep=" ")
-      ML_est <- SearchStrCorpus(search_string, corpus, 
-                                corpuslist,
-                                maxlength, ML_est = ML_est)
+      ML_est <- SearchStrCorpus(search_string, corpus, corpuslist,maxlength, ML_est = ML_est)
       #once you have only word left, you cannot strip any further
     } else if (or_stringlenth == 1){
 #      result <- c("a ")
@@ -73,9 +65,7 @@ SearchStrCorpus <- function(searchstring, corpus,
       return(result)
     } else {
       search_string <- paste(splitstring[or_stringlenth],  sep=" ")
-      ML_est <- SearchStrCorpus(search_string, corpus, 
-                                corpuslist, 
-                                maxlength, ML_est = ML_est)      
+      ML_est <- SearchStrCorpus(search_string, corpus, corpuslist, maxlength, ML_est = ML_est)      
     }   
     
 #   } else if(length(ML_est) == 3){
@@ -89,9 +79,7 @@ SearchStrCorpus <- function(searchstring, corpus,
 }
 
 
-SearchClStrCorpus <- function(search_string, strgtgth, corpus, 
-                              corpuslist,
-                              ML_est = ML_est){
+SearchClStrCorpus <- function(search_string, strgtgth, corpus, corpuslist, ML_est = ML_est){
   names_ML <- c("n-gram", "predword", "Bayes_prob", "distance", "n")
   name_df <- paste("US.",corpus, strgtgth +1, "Markov", sep ="" )
   Markovchains    <- corpuslist[[name_df]]
